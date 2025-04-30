@@ -1,0 +1,211 @@
+{% comment %}
+  Share Cart Widget App Block
+{% endcomment %}
+
+{% assign widget_settings = shop.metafields.share_cart.widget_settings.value %}
+
+{% if widget_settings %}
+  {% case widget_settings.display %}
+    {% when 'cart_page' %}
+      <!-- Cart Page Widget -->
+      <div style="
+    background: {{ widget_settings.colors.background }};
+    border-radius: 12px;
+    padding: 24px;
+    min-height: 180px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    justify-content: center;
+  ">
+    <div>
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+      ">{{ widget_settings.text }}</p>
+      <div style="
+        display: flex;
+        gap: 16px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      ">
+      {% render 'share-cart-buttons',
+        button_style: widget_settings.button_style,
+        colors: widget_settings.colors,
+        direction: 'row'
+      %}
+    </div>
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+        margin-top: 8px;
+      ">No thanks</p>
+    </div>
+  </div>
+    {% when 'product_page' %}
+      <!-- Product Page Widget -->
+      <div style="
+        background: {{ widget_settings.colors.background }};
+        border-radius: 12px;
+        padding: 24px;
+        min-height: 180px;
+        width: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin: 24px 0;
+      ">
+        <p style="
+          color: {{ widget_settings.colors.text }};
+          font-size: 18px;
+          margin-bottom: 12px;
+          text-align: center;
+        ">{{ widget_settings.text }}</p>
+        {% render 'share-cart-buttons',
+          button_style: widget_settings.button_style,
+          colors: widget_settings.colors,
+          direction: 'row'
+        %}
+        <p style="
+          color: {{ widget_settings.colors.text }};
+          font-size: 18px;
+          margin-bottom: 12px;
+          text-align: center;
+          margin-top: 8px;
+        ">No thanks</p>
+      </div>
+    {% when 'add_to_cart' %}
+      <!-- Add to Cart Popup -->
+      <div id="share-cart-popup" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.32);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="
+          background: {{ widget_settings.colors.background }};
+          border-radius: 16px;
+          padding: 32px;
+          min-width: 320px;
+          max-width: 90vw;
+          margin: auto;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 24px;
+          position: relative;
+        ">
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+          ">{{ widget_settings.text }}</p>
+          {% render 'share-cart-buttons',
+            button_style: widget_settings.button_style,
+            colors: widget_settings.colors,
+            direction: 'column'
+          %}
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+            margin-top: 8px;
+            cursor: pointer;
+          " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks</p>
+        </div>
+      </div>
+    {% when 'checkout' %}
+      <!-- Checkout Popup -->
+      <div id="share-cart-popup" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.32);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="
+          background: {{ widget_settings.colors.background }};
+          border-radius: 16px;
+          padding: 32px;
+          min-width: 320px;
+          max-width: 90vw;
+          margin: auto;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 24px;
+          position: relative;
+        ">
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+          ">{{ widget_settings.text }}</p>
+          {% render 'share-cart-buttons',
+            button_style: widget_settings.button_style,
+            colors: widget_settings.colors,
+            direction: 'column'
+          %}
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+            margin-top: 8px;
+            cursor: pointer;
+          " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks</p>
+        </div>
+      </div>
+  {% endcase %}
+{% endif %}
+
+<script>
+  // Show popup on add to cart
+  document.addEventListener('DOMContentLoaded', function() {
+    var popup = document.getElementById('share-cart-popup');
+    if (!popup) return;
+
+    // Example: Show on add to cart button click
+    var addToCartBtn = document.querySelector('form[action*="/cart/add"] [type="submit"], button[name="add"]');
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener('click', function(e) {
+        setTimeout(function() {
+          popup.style.display = 'flex';
+        }, 500); // delay to allow cart logic
+      });
+    }
+
+    // Example: Show on checkout button click
+    var checkoutBtn = document.querySelector('form[action*="/cart"] [type="submit"], button[name="checkout"]');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', function(e) {
+        setTimeout(function() {
+          popup.style.display = 'flex';
+        }, 500);
+      });
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Share Cart Widget",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
