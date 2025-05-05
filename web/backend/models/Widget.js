@@ -16,6 +16,9 @@ const widgetSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Coupon",
     },
+    
+    shareCartUrl: { type: String },
+    
   },
   { timestamps: true }
 );

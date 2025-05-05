@@ -560,9 +560,9 @@ export default function Coupons() {
               </Layout.Section>
             </Layout>
           </Page>
-          <div className="d-flex justify-content-end mt-4">
+          {/* <div className="d-flex justify-content-end mt-4">
             <img src={logo} alt="share cart logo" width="200px" />
-          </div>
+          </div> */}
           {deleteModalMarkup}
           {activateModalMarkup}
         </main>

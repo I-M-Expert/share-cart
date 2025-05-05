@@ -27,7 +27,7 @@ export const createOrUpdateWidget = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Shop identifier not found' });
     }
 
-    const { display, buttonStyle, text, colors } = req.body;
+    const { display, buttonStyle, text, colors, shareCartUrl } = req.body;
 
     let widget = await Widget.findOne({ shop }).populate('coupon');
     if (widget) {
@@ -35,6 +35,7 @@ export const createOrUpdateWidget = async (req, res) => {
         widget.buttonStyle = buttonStyle;
         widget.text = text;
         widget.colors = colors;
+        widget.shareCartUrl = shareCartUrl; // <-- add this
         await widget.save();
     } else {
         widget = await Widget.create({
@@ -43,6 +44,7 @@ export const createOrUpdateWidget = async (req, res) => {
             buttonStyle,
             text,
             colors,
+            shareCartUrl, // <-- add this
         });
     }
 
@@ -98,6 +100,7 @@ export const createOrUpdateWidget = async (req, res) => {
               text,
               colors,
               coupon: populatedWidget.coupon,
+              shareCartUrl,
             }),
           },
         ],

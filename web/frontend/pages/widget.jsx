@@ -26,6 +26,11 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
   const showWhatsapp = coupon ? coupon.shareWhatsapp : true;
   const showMessenger = coupon ? coupon.shareMessenger : true;
 
+  // Use coupon custom message or fallback
+  const shareMessage = encodeURIComponent(
+    coupon?.customMessage || "Check out my cart!"
+  );
+
   // Custom button style
   const customButton = (icon, alt, text) => (
     <button
@@ -79,10 +84,10 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
           ? brandIcon(
               "lsicon:email-send-filled",
               "Email",
-              "mailto:?subject=Check%20out%20my%20cart!",
+              `mailto:?subject=${shareMessage}`,
               "Email"
             )
-          : <a href="mailto:?subject=Check%20out%20my%20cart!" target="_blank" rel="noopener noreferrer">
+          : <a href={`mailto:?subject=${shareMessage}`} target="_blank" rel="noopener noreferrer">
               {customButton("mdi:email", "Email", buttonStyle === "text_logo_custom" ? "Email" : undefined)}
             </a>
       );
@@ -93,10 +98,10 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
           ? brandIcon(
               "logos:whatsapp-icon",
               "WhatsApp",
-              "https://wa.me/?text=Check%20out%20my%20cart!",
+              `https://wa.me/?text=${shareMessage}`,
               "WhatsApp"
             )
-          : <a href="https://wa.me/?text=Check%20out%20my%20cart!" target="_blank" rel="noopener noreferrer">
+          : <a href={`https://wa.me/?text=${shareMessage}`} target="_blank" rel="noopener noreferrer">
               {customButton("ic:baseline-whatsapp", "WhatsApp", buttonStyle === "text_logo_custom" ? "WhatsApp" : undefined)}
             </a>
       );
@@ -107,10 +112,10 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
           ? brandIcon(
               "logos:messenger",
               "Messenger",
-              "https://m.me/?link=Check%20out%20my%20cart!",
+              `https://m.me/?link=${shareMessage}`,
               "Messenger"
             )
-          : <a href="https://m.me/?link=Check%20out%20my%20cart!" target="_blank" rel="noopener noreferrer">
+          : <a href={`https://m.me/?link=${shareMessage}`} target="_blank" rel="noopener noreferrer">
               {customButton("cib:messenger", "Messenger", buttonStyle === "text_logo_custom" ? "Messenger" : undefined)}
             </a>
       );
@@ -122,22 +127,17 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
 };
 
 export default function Widget() {
+  const subscription = useSelector(
+    (state) => state.auth.subscription?.subscription
+  );
 
-
-    const subscription = useSelector(
-      (state) => state.auth.subscription?.subscription
-    );
-
-
-    const filteredDisplayOptions = DISPLAY_OPTIONS.filter((options) => {
-      // If not unlimited and we've reached the limit
-      if (subscription?.permissions?.widget == 2) {
-        return options.value !== "checkout" && options.value !== "product_page";
-      }
-      return options;
-    });
-  
-
+  const filteredDisplayOptions = DISPLAY_OPTIONS.filter((options) => {
+    // If not unlimited and we've reached the limit
+    if (subscription?.permissions?.widget == 2) {
+      return options.value !== "checkout" && options.value !== "product_page";
+    }
+    return options;
+  });
 
   // State for settings
   const [display, setDisplay] = useState(["add_to_cart"]); // now array
@@ -186,7 +186,11 @@ export default function Widget() {
         const res = await fetch("/api/widgets");
         const data = await res.json();
         if (data.success && data.widget) {
-          setDisplay(Array.isArray(data.widget.display) ? data.widget.display : [data.widget.display || "add_to_cart"]);
+          setDisplay(
+            Array.isArray(data.widget.display)
+              ? data.widget.display
+              : [data.widget.display || "add_to_cart"]
+          );
           setButtonStyle(data.widget.buttonStyle || "text_logo_custom");
           setText(data.widget.text || "");
           setColors({
@@ -198,12 +202,32 @@ export default function Widget() {
           setCoupon(data.widget.coupon || null);
         }
       } catch (err) {
-        setNotification({ status: "critical", message: "Failed to load widget settings." });
+        setNotification({
+          status: "critical",
+          message: "Failed to load widget settings.",
+        });
       }
       setLoadingWidget(false);
     }
     fetchSettings();
   }, []);
+
+  // Add this function inside your Widget component
+  const generateShareCartUrl = async (coupon) => {
+    // Fetch current cart (Shopify AJAX API)
+    const res = await fetch("/cart.js");
+    const cart = await res.json();
+    const cartData = {
+      items: cart.items.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
+      discount: coupon?.code || null,
+    };
+    const encoded = btoa(JSON.stringify(cartData));
+    // You may want to use shop domain dynamically if available
+    return `/tools/share-cart?cart=${encoded}`;
+  };
 
   // Handle color changes
   const handleColorChange = (key, value) => {
@@ -211,9 +235,13 @@ export default function Widget() {
   };
 
   // Save handler
+ 
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Generate shareCartUrl before saving
+      const shareCartUrl = await generateShareCartUrl(coupon);
+
       const res = await fetch("/api/widgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -222,16 +250,23 @@ export default function Widget() {
           buttonStyle,
           text,
           colors,
+          shareCartUrl,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setNotification({ status: "success", message: "Settings saved!" });
       } else {
-        setNotification({ status: "critical", message: data.message || "Failed to save settings." });
+        setNotification({
+          status: "critical",
+          message: data.message || "Failed to save settings.",
+        });
       }
     } catch (err) {
-      setNotification({ status: "critical", message: "Failed to save settings." });
+      setNotification({
+        status: "critical",
+        message: "Failed to save settings.",
+      });
     }
     setSaving(false);
     setTimeout(() => setNotification(null), 3000);
@@ -255,8 +290,18 @@ export default function Widget() {
             <Banner status={notification.status} title={notification.message} />
           )}
           {loadingWidget ? (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-              <Spinner accessibilityLabel="Loading widget settings" size="large" />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 400,
+              }}
+            >
+              <Spinner
+                accessibilityLabel="Loading widget settings"
+                size="large"
+              />
             </div>
           ) : (
             <div
@@ -285,14 +330,26 @@ export default function Widget() {
                     {DISPLAY_OPTIONS.map((opt) => (
                       <label
                         key={opt.value}
-                        style={{ display: "flex", alignItems: "center", gap: 8, opacity: display.length >= allowedDisplayCount && !display.includes(opt.value) ? 0.5 : 1 }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          opacity:
+                            display.length >= allowedDisplayCount &&
+                            !display.includes(opt.value)
+                              ? 0.5
+                              : 1,
+                        }}
                       >
                         <input
                           type="checkbox"
                           name="display"
                           value={opt.value}
                           checked={display.includes(opt.value)}
-                          disabled={display.length >= allowedDisplayCount && !display.includes(opt.value)}
+                          disabled={
+                            display.length >= allowedDisplayCount &&
+                            !display.includes(opt.value)
+                          }
                           onChange={() => handleDisplayChange(opt.value)}
                         />
                         {opt.label}
@@ -411,7 +468,11 @@ export default function Widget() {
                     {BUTTON_STYLE_OPTIONS.map((opt) => (
                       <label
                         key={opt.value}
-                        style={{ display: "flex", alignItems: "center", gap: 8 }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
                       >
                         <input
                           type="radio"
@@ -427,7 +488,11 @@ export default function Widget() {
                 </div>
 
                 <div className="d-flex jcfe aic" style={{ width: "100%" }}>
-                  <Button style={{ borderRadius: 8 }} onClick={handleSave} loading={saving}>
+                  <Button
+                    style={{ borderRadius: 8 }}
+                    onClick={handleSave}
+                    loading={saving}
+                  >
                     {saving ? "Saving..." : "Save"}
                   </Button>
                 </div>
@@ -480,7 +545,7 @@ export default function Widget() {
                         marginTop: 8,
                       }}
                     >
-                      No thanks
+                      No thanks! I prefer not to get a discount
                     </p>
                   </div>
                 ) : (
@@ -526,7 +591,7 @@ export default function Widget() {
                           marginTop: 8,
                         }}
                       >
-                        No thanks
+                        No thanks! I prefer not to get a discount
                       </p>
                     </div>
                   </div>
@@ -535,9 +600,9 @@ export default function Widget() {
             </div>
           )}
         </Page>
-        <div className="d-flex justify-content-end mt-4">
+        {/* <div className="d-flex justify-content-end mt-4">
           <img src={logo} alt="share cart logo" srcSet="" width="200px" />
-        </div>
+        </div> */}
       </main>
     </div>
   );

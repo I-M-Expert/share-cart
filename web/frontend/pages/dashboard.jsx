@@ -196,7 +196,18 @@ export default function Dashboard() {
                       data={pieData}
                       options={{
                         responsive: true,
-                        plugins: { legend: { position: "bottom" } },
+                        plugins: {
+                          legend: { position: "bottom" },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: $${value.toLocaleString()}`;
+                              }
+                            }
+                          }
+                        }
                       }}
                       height={100}
                     />
@@ -218,12 +229,12 @@ export default function Dashboard() {
               {[
                 {
                   name: "Customize Widget",
-                  link: "/wiget",
+                  link: "/widget",
                   icon: <BrushIcon />,
                 },
                 {
                   name: "Create Coupons",
-                  link: "/coupons/create",
+                  link: "/coupons",
                   icon: <CouponIcon />,
                 },
                 {

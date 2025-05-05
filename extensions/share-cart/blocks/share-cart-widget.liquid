@@ -3,12 +3,30 @@
 {% endcomment %}
 
 {% assign widget_settings = shop.metafields.share_cart.widget_settings.value %}
+{% assign display_str = widget_settings.display | join: ',' %}
 
-{% if widget_settings %}
-  {% case widget_settings.display %}
-    {% when 'cart_page' %}
-      <!-- Cart Page Widget -->
-      <div style="
+{% assign store_name = shop.name | default: shop.domain | default: 'this store' %}
+
+{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}
+  {% assign discount = widget_settings.coupon.fixedAmount | prepend: '$' %}
+{% else %}
+  {% assign discount = widget_settings.coupon.percentageValue | append: '%' %}
+{% endif %}
+
+
+
+{% assign share_cart_link = widget_settings.shareCartUrl | default: shop.url | append: '/tools/share-cart' %}
+
+{% assign message = widget_settings.text %}
+
+{% assign share_message = widget_settings.coupon.customMessage 
+  | replace: '[Insert Store Name]', store_name 
+  | replace: '[Insert Discount]', discount 
+  | replace: '[Insert Link]', share_cart_link %}
+
+{% if display_str contains 'cart_page' %}
+  <!-- Cart Page Widget -->
+  <div style="
     background: {{ widget_settings.colors.background }};
     border-radius: 12px;
     padding: 24px;
@@ -26,7 +44,7 @@
         font-size: 18px;
         margin-bottom: 12px;
         text-align: center;
-      ">{{ widget_settings.text }}</p>
+      ">{{ message }}</p>
       <div style="
         display: flex;
         gap: 16px;
@@ -35,10 +53,12 @@
         justify-content: center;
       ">
       {% render 'share-cart-buttons',
-        button_style: widget_settings.button_style,
-        colors: widget_settings.colors,
-        direction: 'row'
-      %}
+  button_style: widget_settings.button_style,
+  colors: widget_settings.colors,
+  direction: 'row',
+  coupon: widget_settings.coupon,
+  share_message: share_message
+%}
     </div>
       <p style="
         color: {{ widget_settings.colors.text }};
@@ -46,132 +66,143 @@
         margin-bottom: 12px;
         text-align: center;
         margin-top: 8px;
-      ">No thanks</p>
+      ">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
-    {% when 'product_page' %}
-      <!-- Product Page Widget -->
-      <div style="
-        background: {{ widget_settings.colors.background }};
-        border-radius: 12px;
-        padding: 24px;
-        min-height: 180px;
-        width: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        margin: 24px 0;
-      ">
-        <p style="
-          color: {{ widget_settings.colors.text }};
-          font-size: 18px;
-          margin-bottom: 12px;
-          text-align: center;
-        ">{{ widget_settings.text }}</p>
-        {% render 'share-cart-buttons',
-          button_style: widget_settings.button_style,
-          colors: widget_settings.colors,
-          direction: 'row'
-        %}
-        <p style="
-          color: {{ widget_settings.colors.text }};
-          font-size: 18px;
-          margin-bottom: 12px;
-          text-align: center;
-          margin-top: 8px;
-        ">No thanks</p>
-      </div>
-    {% when 'add_to_cart' %}
-      <!-- Add to Cart Popup -->
-      <div id="share-cart-popup" style="
-        display: none;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.32);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-      ">
-        <div style="
-          background: {{ widget_settings.colors.background }};
-          border-radius: 16px;
-          padding: 32px;
-          min-width: 320px;
-          max-width: 90vw;
-          margin: auto;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 24px;
-          position: relative;
-        ">
-          <p style="
-            color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 16px;
-            text-align: center;
-          ">{{ widget_settings.text }}</p>
-          {% render 'share-cart-buttons',
-            button_style: widget_settings.button_style,
-            colors: widget_settings.colors,
-            direction: 'column'
-          %}
-          <p style="
-            color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 12px;
-            text-align: center;
-            margin-top: 8px;
-            cursor: pointer;
-          " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks</p>
-        </div>
-      </div>
-    {% when 'checkout' %}
-      <!-- Checkout Popup -->
-      <div id="share-cart-popup" style="
-        display: none;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.32);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-      ">
-        <div style="
-          background: {{ widget_settings.colors.background }};
-          border-radius: 16px;
-          padding: 32px;
-          min-width: 320px;
-          max-width: 90vw;
-          margin: auto;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 24px;
-          position: relative;
-        ">
-          <p style="
-            color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 16px;
-            text-align: center;
-          ">{{ widget_settings.text }}</p>
-          {% render 'share-cart-buttons',
-            button_style: widget_settings.button_style,
-            colors: widget_settings.colors,
-            direction: 'column'
-          %}
-          <p style="
-            color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 12px;
-            text-align: center;
-            margin-top: 8px;
-            cursor: pointer;
-          " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks</p>
-        </div>
-      </div>
-  {% endcase %}
+{% endif %}
+
+{% if display_str contains 'product_page' %}
+  <!-- Product Page Widget -->
+  <div style="
+    background: {{ widget_settings.colors.background }};
+    border-radius: 12px;
+    padding: 24px;
+    min-height: 180px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin: 24px 0;
+  ">
+    <p style="
+      color: {{ widget_settings.colors.text }};
+      font-size: 18px;
+      margin-bottom: 12px;
+      text-align: center;
+    ">{{ message }}</p>
+    {% render 'share-cart-buttons',
+  button_style: widget_settings.button_style,
+  colors: widget_settings.colors,
+  direction: 'row',
+  coupon: widget_settings.coupon,
+  share_message: share_message
+%}
+    <p style="
+      color: {{ widget_settings.colors.text }};
+      font-size: 18px;
+      margin-bottom: 12px;
+      text-align: center;
+      margin-top: 8px;
+    ">No thanks! I prefer not to get a discount</p>
+  </div>
+{% endif %}
+
+{% if display_str contains 'add_to_cart' %}
+  <!-- Add to Cart Popup -->
+  <div id="share-cart-popup" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.32);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  ">
+    <div style="
+      background: {{ widget_settings.colors.background }};
+      border-radius: 16px;
+      padding: 32px;
+      min-width: 320px;
+      max-width: 90vw;
+      margin: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      position: relative;
+    ">
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 16px;
+        text-align: center;
+      ">{{ message }}</p>
+      {% render 'share-cart-buttons',
+  button_style: widget_settings.button_style,
+  colors: widget_settings.colors,
+  direction: 'column',
+  coupon: widget_settings.coupon,
+  share_message: share_message
+%}
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+        margin-top: 8px;
+        cursor: pointer;
+      " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks! I prefer not to get a discount</p>
+    </div>
+  </div>
+{% endif %}
+
+{% if display_str contains 'checkout' %}
+  <!-- Checkout Popup -->
+  <div id="share-cart-popup" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.32);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  ">
+    <div style="
+      background: {{ widget_settings.colors.background }};
+      border-radius: 16px;
+      padding: 32px;
+      min-width: 320px;
+      max-width: 90vw;
+      margin: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      position: relative;
+    ">
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 16px;
+        text-align: center;
+      ">{{ message }}</p>
+      {% render 'share-cart-buttons',
+  button_style: widget_settings.button_style,
+  colors: widget_settings.colors,
+  direction: 'column',
+  coupon: widget_settings.coupon,
+  share_message: share_message
+%}
+      <p style="
+        color: {{ widget_settings.colors.text }};
+        font-size: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+        margin-top: 8px;
+        cursor: pointer;
+      " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks! I prefer not to get a discount</p>
+    </div>
+  </div>
 {% endif %}
 
 <script>
@@ -201,7 +232,6 @@
     }
   });
 </script>
-
 {% schema %}
 {
   "name": "Share Cart Widget",

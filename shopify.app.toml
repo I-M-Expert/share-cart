@@ -24,5 +24,11 @@ redirect_urls = [
   "https://share-cart.onrender.com/api/auth/callback"
 ]
 
+[app_proxy]
+url = "https://share-cart.onrender.com/proxy"
+subpath = "order-cancellation"
+prefix = "apps"
+include_host = true
+
 [pos]
 embedded = false
