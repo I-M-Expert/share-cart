@@ -28,6 +28,7 @@ export default function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+   
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>

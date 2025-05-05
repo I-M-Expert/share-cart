@@ -15,7 +15,7 @@
 
 
 
-{% assign share_cart_link = widget_settings.shareCartUrl | default: shop.url | append: '/tools/share-cart' %}
+{% assign share_cart_link = 'https://' | append: shop.domain | append: '/tools/share-cart?cart=' %}
 
 {% assign message = widget_settings.text %}
 
@@ -230,6 +230,24 @@
         }, 500);
       });
     }
+
+    // --- Inject cart data into share links ---
+    fetch('/cart.js')
+      .then(res => res.json())
+      .then(cart => {
+        var cartData = {
+          items: cart.items.map(function(item) {
+            return { id: item.id, quantity: item.quantity };
+          })
+        };
+        var encoded = btoa(JSON.stringify(cartData));
+        // Update all share-cart links
+        document.querySelectorAll('a[href*="/tools/share-cart"]').forEach(function(link) {
+          var url = new URL(link.href);
+          url.searchParams.set('cart', encoded);
+          link.href = url.toString();
+        });
+      });
   });
 </script>
 {% schema %}

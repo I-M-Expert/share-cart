@@ -25,9 +25,9 @@ redirect_urls = [
 ]
 
 [app_proxy]
-url = "https://share-cart.onrender.com/proxy"
-subpath = "order-cancellation"
-prefix = "apps"
+url = "https://share-cart.onrender.com/tools/share-cart"
+subpath = "share-cart"
+prefix = "tools"
 include_host = true
 
 [pos]

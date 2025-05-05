@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { Card, Page, Layout, Text, Select } from "@shopify/polaris";
 import { logo } from "../assets";
@@ -96,6 +96,19 @@ export default function Dashboard() {
   const shares = 120;
   const couponsUsed = 45;
   const revenue = "$2,340";
+
+
+  useEffect(() => {
+      
+        if (!window.Tawk_API) {
+          var s1 = document.createElement("script");
+          s1.async = true;
+          s1.src = "https://embed.tawk.to/6810e04ba321df190d7ae61a/1iq0uo9vd";
+          s1.charset = "UTF-8";
+          s1.setAttribute("crossorigin", "*");
+          document.body.appendChild(s1);
+        }
+      }, []);
 
   return (
     <div
@@ -262,9 +275,9 @@ export default function Dashboard() {
             </div>
           </div>
         </Page>
-        <div className="d-flex justify-content-end mt-4">
+        {/* <div className="d-flex justify-content-end mt-4">
           <img src={logo} alt="share cart logo" srcset="" width="200px" />
-        </div>
+        </div> */}
       </main>
     </div>
   );

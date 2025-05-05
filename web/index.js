@@ -3,6 +3,7 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
+import crypto from "crypto";
 
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
@@ -85,6 +86,64 @@ app.use(
   collectionRoutes
 );
 app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
+
+// --- Proxy endpoint for Shopify App Proxy: /tools/share-cart ---
+app.use("/tools/share-cart", async (req, res) => {
+  // 1. Extract query parameters
+  const query = req.query;
+  const { signature, ...params } = query;
+
+  // 2. Verify Shopify proxy signature
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map((key) =>
+      `${key}=${Array.isArray(params[key]) ? params[key].join(",") : params[key]}`
+    )
+    .join("");
+
+  const calculatedSignature = crypto
+    .createHmac("sha256", process.env.SHOPIFY_API_SECRET)
+    .update(sortedParams)
+    .digest("hex");
+
+  if (calculatedSignature !== signature) {
+    return res.status(403).send("Invalid signature");
+  }
+
+  // 3. Serve a minimal HTML page that loads the cart restoration script
+  res
+    .status(200)
+    .set("Content-Type", "text/html")
+    .send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Shared Cart</title>
+        </head>
+        <body>
+          <div id="share-cart-app">Restoring your cart...</div>
+          <script src="/share-cart-landing.js"></script>
+        </body>
+      </html>
+    `);
+});
+
+// Serve the cart restoration script
+app.get("/share-cart-landing.js", (req, res) => {
+  res.set("Content-Type", "application/javascript");
+  res.sendFile(join(STATIC_PATH, "share-cart-landing.js"));
+});
+
+// --- API endpoint to decode cart data (optional, for validation/debugging) ---
+app.post("/api/share-cart/decode", express.json(), (req, res) => {
+  try {
+    const { cart } = req.body;
+    const decoded = JSON.parse(Buffer.from(cart, "base64").toString("utf-8"));
+    res.json({ success: true, cart: decoded });
+  } catch (e) {
+    res.status(400).json({ success: false, message: "Invalid cart data" });
+  }
+});
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

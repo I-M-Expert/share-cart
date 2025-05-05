@@ -48,6 +48,18 @@ export default function Coupons() {
     (state) => state.auth.subscription?.subscription
   );
 
+  useEffect(() => {
+      
+        if (!window.Tawk_API) {
+          var s1 = document.createElement("script");
+          s1.async = true;
+          s1.src = "https://embed.tawk.to/6810e04ba321df190d7ae61a/1iq0uo9vd";
+          s1.charset = "UTF-8";
+          s1.setAttribute("crossorigin", "*");
+          document.body.appendChild(s1);
+        }
+      }, []);
+
   console.log("subscription", subscription);
 
   const navigate = useNavigate();
