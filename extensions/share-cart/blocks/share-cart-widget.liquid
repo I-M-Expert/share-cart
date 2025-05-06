@@ -235,7 +235,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // --- Inject cart data and discount code into share links and messages ---
     function updateShareLinks() {
       fetch('/cart.js')
         .then(res => res.json())
@@ -248,7 +247,12 @@
           var encoded = btoa(JSON.stringify(cartData));
           var discount = "{{ widget_settings.coupon.code | url_encode }}";
           var shopDomain = "{{ shop.domain }}";
+          // Always include discount param, even if blank
           var shareCartLink = "https://" + shopDomain + "/tools/share-cart?cart=" + encoded + (discount ? "&discount=" + discount : "");
+
+          // Debug
+          console.log("Discount code:", discount);
+          console.log("Share cart link:", shareCartLink);
 
           // Prepare the message with the real link
           var rawMessage = `{{ widget_settings.coupon.customMessage | replace: "'", "\\'" | strip_newlines }}`;
@@ -277,13 +281,11 @@
         });
     }
 
-    // Update links on page load and when popup opens
     updateShareLinks();
     var popup = document.getElementById('share-cart-popup');
     if (popup) {
       popup.addEventListener('show', updateShareLinks);
     }
-    // Optionally, update on button hover/click for extra safety
     document.querySelectorAll('a[data-share]').forEach(function(link) {
       link.addEventListener('click', updateShareLinks);
     });
