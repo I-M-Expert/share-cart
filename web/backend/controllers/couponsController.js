@@ -262,6 +262,76 @@ export const createCoupon = async (req, res) => {
     }
     // --- End Shopify App Discount creation ---
 
+    // --- Create Standard Discount in Shopify ---
+    try {
+      const client = new shopify.api.clients.Graphql({ session });
+
+      // Build customerGets and appliesTo
+      let customerGets = {};
+      if (discountType === "percentage") {
+        customerGets = {
+          value: { percentage: { value: Number(percentageValue) } },
+          items: { all: false, products: productIds, collections: collectionIds }
+        };
+      } else {
+        customerGets = {
+          value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+          items: { all: false, products: productIds, collections: collectionIds }
+        };
+      }
+
+      const mutation = `
+        mutation discountCodeBasicCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
+          discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
+            codeDiscountNode {
+              id
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  title
+                  codes(first: 1) { nodes { code } }
+                  status
+                }
+              }
+            }
+            userErrors { field message }
+          }
+        }
+      `;
+
+      const variables = {
+        basicCodeDiscount: {
+          title: name,
+          codes: [code],
+          startsAt: new Date().toISOString(),
+          endsAt: endDate ? new Date(endDate).toISOString() : undefined,
+          customerGets,
+          customerSelection: { all: true },
+          appliesOncePerCustomer: true,
+          usageLimit: 1
+        }
+      };
+
+      const data = await client.query({
+        data: {
+          query: mutation,
+          variables
+        }
+      });
+
+      const resp = data.body.data.discountCodeBasicCreate;
+      if (resp.userErrors && resp.userErrors.length > 0) {
+        console.error("Shopify discount creation errors:", resp.userErrors);
+        // Optionally: handle error, rollback, or notify user
+      } else {
+        newCoupon.shopifyDiscountId = resp.codeDiscountNode.id;
+        await newCoupon.save();
+      }
+    } catch (e) {
+      console.error("Failed to create Shopify Discount:", e);
+      // Optionally: handle error, rollback, or notify user
+    }
+    // --- End Shopify Discount creation ---
+
     return res.status(201).json({
       success: true,
       message: 'Coupon created successfully',
@@ -482,6 +552,69 @@ export const editCoupon = async (req, res) => {
       } catch (e) {
         console.error("Failed to update Shopify App Discount:", e);
       }
+
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+
+        let customerGets = {};
+        if (discountType === "percentage") {
+          customerGets = {
+            value: { percentage: { value: Number(percentageValue) } },
+            items: { all: false, products: productIds, collections: collectionIds }
+          };
+        } else {
+          customerGets = {
+            value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+            items: { all: false, products: productIds, collections: collectionIds }
+          };
+        }
+
+        const mutation = `
+          mutation discountCodeBasicUpdate($basicCodeDiscount: DiscountCodeBasicInput!, $id: ID!) {
+            discountCodeBasicUpdate(basicCodeDiscount: $basicCodeDiscount, id: $id) {
+              codeDiscountNode {
+                id
+                codeDiscount {
+                  ... on DiscountCodeBasic {
+                    title
+                    codes(first: 1) { nodes { code } }
+                    status
+                  }
+                }
+              }
+              userErrors { field message }
+            }
+          }
+        `;
+
+        const variables = {
+          id: coupon.shopifyDiscountId,
+          basicCodeDiscount: {
+            title: coupon.name,
+            codes: [coupon.code],
+            startsAt: coupon.createdAt.toISOString(),
+            endsAt: coupon.endDate ? new Date(coupon.endDate).toISOString() : undefined,
+            customerGets,
+            customerSelection: { all: true },
+            appliesOncePerCustomer: true,
+            usageLimit: 1
+          }
+        };
+
+        const data = await client.query({
+          data: {
+            query: mutation,
+            variables
+          }
+        });
+
+        const resp = data.body.data.discountCodeBasicUpdate;
+        if (resp.userErrors && resp.userErrors.length > 0) {
+          console.error("Shopify discount update errors:", resp.userErrors);
+        }
+      } catch (e) {
+        console.error("Failed to update Shopify Discount:", e);
+      }
     }
     
     return res.status(200).json({
@@ -598,6 +731,28 @@ export const deleteCoupon = async (req, res) => {
       });
     }
     
+    if (deletedCoupon && deletedCoupon.shopifyDiscountId) {
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+        const mutation = `
+          mutation discountCodeBasicDelete($id: ID!) {
+            discountCodeBasicDelete(id: $id) {
+              deletedCodeDiscountId
+              userErrors { field message }
+            }
+          }
+        `;
+        const variables = { id: deletedCoupon.shopifyDiscountId };
+        const data = await client.query({ data: { query: mutation, variables } });
+        const userErrors = data.body.data.discountCodeBasicDelete.userErrors;
+        if (userErrors && userErrors.length > 0) {
+          console.error("Shopify discount delete errors:", userErrors);
+        }
+      } catch (e) {
+        console.error("Failed to delete Shopify Discount:", e);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Coupon deleted successfully'
@@ -691,6 +846,26 @@ export const activateCoupon = async (req, res) => {
         }
       } catch (e) {
         console.error("Failed to activate Shopify App Discount:", e);
+      }
+
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+        const mutation = `
+          mutation discountCodeBasicActivate($id: ID!) {
+            discountCodeBasicActivate(id: $id) {
+              codeDiscountNode { id }
+              userErrors { field message }
+            }
+          }
+        `;
+        const variables = { id: updated.shopifyDiscountId };
+        const data = await client.query({ data: { query: mutation, variables } });
+        const userErrors = data.body.data.discountCodeBasicActivate.userErrors;
+        if (userErrors && userErrors.length > 0) {
+          console.error("Shopify discount activation errors:", userErrors);
+        }
+      } catch (e) {
+        console.error("Failed to activate Shopify Discount:", e);
       }
     }
 
