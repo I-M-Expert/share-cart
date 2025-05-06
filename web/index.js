@@ -91,7 +91,7 @@ app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
 app.use("/tools/share-cart", async (req, res) => {
 
    console.log("Proxy hit:", req.url, req.headers);
-   
+
   // 1. Extract query parameters
   const query = req.query;
   const { signature, ...params } = query;
@@ -105,7 +105,7 @@ app.use("/tools/share-cart", async (req, res) => {
     .join("");
 
   const calculatedSignature = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET)
+    .createHmac("sha256", process.env.SHOPIFY_API_SECRET || "")
     .update(sortedParams)
     .digest("hex");
 
@@ -114,10 +114,7 @@ app.use("/tools/share-cart", async (req, res) => {
   }
 
   // 3. Serve a minimal HTML page that loads the cart restoration script
-  res
-    .status(200)
-    .set("Content-Type", "text/html")
-    .send(`
+  res.status(200).set("Content-Type", "text/html").send(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -125,7 +122,7 @@ app.use("/tools/share-cart", async (req, res) => {
         </head>
         <body>
           <div id="share-cart-app">Restoring your cart...</div>
-          <script src="/share-cart-landing.js"></script>
+          <script src="https://share-cart.onrender.com/share-cart-landing.js"></script>
         </body>
       </html>
     `);
