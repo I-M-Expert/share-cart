@@ -24,6 +24,7 @@ redirect_urls = [
   "https://share-cart.onrender.com/api/auth/callback"
 ]
 
+
 [app_proxy]
 url = "https://share-cart.onrender.com/tools/share-cart"
 subpath = "share-cart"
