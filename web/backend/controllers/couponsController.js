@@ -161,8 +161,8 @@ export const createCoupon = async (req, res) => {
           value: { percentage: Number(percentageValue) },
           items: {
             all: false,
-            ...(productIds.length ? { products: { add: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+            ...(productIds.length ? { products: productIds } : {}),
+            ...(collectionIds.length ? { collections: collectionIds } : {}),
           },
         };
       } else if (discountType === "fixed") {
@@ -170,8 +170,8 @@ export const createCoupon = async (req, res) => {
           value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
           items: {
             all: false,
-            ...(productIds.length ? { products: { add: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+            ...(productIds.length ? { products: productIds } : {}),
+            ...(collectionIds.length ? { collections: collectionIds } : {}),
           },
         };
       }
@@ -388,8 +388,8 @@ export const editCoupon = async (req, res) => {
             value: { percentage: Number(percentageValue) },
             items: {
               all: false,
-              ...(productIds.length ? { products: { add: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+              ...(productIds.length ? { products: productIds } : {}),
+              ...(collectionIds.length ? { collections: collectionIds } : {}),
             },
           };
         } else if (discountType === "fixed") {
@@ -397,8 +397,8 @@ export const editCoupon = async (req, res) => {
             value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
             items: {
               all: false,
-              ...(productIds.length ? { products: { add: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+              ...(productIds.length ? { products: productIds } : {}),
+              ...(collectionIds.length ? { collections: collectionIds } : {}),
             },
           };
         }
