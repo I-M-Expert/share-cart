@@ -89,6 +89,9 @@ app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
 
 // --- Proxy endpoint for Shopify App Proxy: /tools/share-cart ---
 app.use("/tools/share-cart", async (req, res) => {
+
+   console.log("Proxy hit:", req.url, req.headers);
+   
   // 1. Extract query parameters
   const query = req.query;
   const { signature, ...params } = query;
