@@ -18,7 +18,7 @@ export default function Support() {
         title="Support Chat"
         src="https://tawk.to/chat/6810e04ba321df190d7ae61a/1iq0uo9vd"
         width="100%"
-        height="90vh"
+        height="900"
         style={{ border: "1px solid #ccc", borderRadius: 8}}
         allow="autoplay; encrypted-media"
       ></iframe>

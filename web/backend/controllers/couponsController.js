@@ -154,7 +154,8 @@ export const createCoupon = async (req, res) => {
     try {
       const client = new shopify.api.clients.Graphql({ session });
 
-      let customerGets = {};
+      // Build customerGets based on discountType
+      let customerGets;
       if (discountType === "percentage") {
         customerGets = {
           value: { percentage: Number(percentageValue) },
@@ -164,7 +165,7 @@ export const createCoupon = async (req, res) => {
             ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
           },
         };
-      } else {
+      } else if (discountType === "fixed") {
         customerGets = {
           value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
           items: {
@@ -175,36 +176,65 @@ export const createCoupon = async (req, res) => {
         };
       }
 
-      const mutation = `
-        mutation discountCodeBasicCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
-          discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
-            codeDiscountNode {
-              id
-              codeDiscount {
-                ... on DiscountCodeBasic {
-                  title
-                  code
-                  status
-                }
-              }
-            }
-            userErrors { field message }
-          }
-        }
-      `;
+      // Build minimumRequirement if provided
+      let minimumRequirement;
+      if (senderRequireMinPurchase && senderMinPurchaseAmount) {
+        minimumRequirement = {
+          subtotal: {
+            greaterThanOrEqualToSubtotal: String(senderMinPurchaseAmount),
+          },
+        };
+      }
 
+      // Build the variables object
       const variables = {
         basicCodeDiscount: {
           title: name,
-          code, // single string
+          code,
           startsAt: new Date().toISOString(),
           endsAt: endDate ? new Date(endDate).toISOString() : undefined,
           customerGets,
           customerSelection: { all: true },
           appliesOncePerCustomer: true,
           usageLimit: 1,
+          ...(minimumRequirement ? { minimumRequirement } : {}),
         },
       };
+
+      const mutation = `
+  mutation CreateDiscountCode($basicCodeDiscount: DiscountCodeBasicInput!) {
+    discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
+      codeDiscountNode {
+        id
+        codeDiscount {
+          ... on DiscountCodeBasic {
+            title
+            startsAt
+            endsAt
+            customerSelection {
+              ... on DiscountCustomers {
+                customers {
+                  id
+                }
+              }
+            }
+            customerGets {
+              value {
+                ... on DiscountPercentage {
+                  percentage
+                }
+              }
+            }
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
 
       const data = await client.query({
         data: {
@@ -352,7 +382,7 @@ export const editCoupon = async (req, res) => {
       try {
         const client = new shopify.api.clients.Graphql({ session });
 
-        let customerGets = {};
+        let customerGets;
         if (discountType === "percentage") {
           customerGets = {
             value: { percentage: Number(percentageValue) },
@@ -362,13 +392,23 @@ export const editCoupon = async (req, res) => {
               ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
             },
           };
-        } else {
+        } else if (discountType === "fixed") {
           customerGets = {
             value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
             items: {
               all: false,
               ...(productIds.length ? { products: { add: productIds } } : {}),
               ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+            },
+          };
+        }
+
+        // Build minimumRequirement if provided
+        let minimumRequirement;
+        if (senderRequireMinPurchase && senderMinPurchaseAmount) {
+          minimumRequirement = {
+            subtotal: {
+              greaterThanOrEqualToSubtotal: String(senderMinPurchaseAmount),
             },
           };
         }
@@ -404,6 +444,7 @@ export const editCoupon = async (req, res) => {
             customerSelection: { all: true },
             appliesOncePerCustomer: true,
             usageLimit: 1,
+            ...(minimumRequirement ? { minimumRequirement } : {}),
           },
         };
 
