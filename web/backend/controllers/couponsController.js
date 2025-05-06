@@ -225,6 +225,21 @@ export const createCoupon = async (req, res) => {
         newCoupon.shopifyDiscountId = resp.codeDiscountNode.id;
         await newCoupon.save();
       }
+
+      if (resp.userErrors && resp.userErrors.length > 0) {
+        console.error("Shopify discount creation userErrors:", resp.userErrors);
+      }
+      if (data.body.errors || data.body.extensions?.cost?.throttleStatus?.currentlyThrottled) {
+        console.error("Shopify GraphQL errors:", data.body.errors);
+      }
+      if (data.body.errors || data.body.extensions?.cost?.throttleStatus?.currentlyThrottled || resp.userErrors?.length) {
+        return res.status(400).json({
+          success: false,
+          message: "Shopify API error",
+          userErrors: resp.userErrors,
+          graphQLErrors: data.body.errors,
+        });
+      }
     } catch (e) {
       console.error("Failed to create Shopify Discount:", e);
     }
