@@ -85,6 +85,9 @@ export const createCoupon = async (req, res) => {
       discountType,
       percentageValue,
       fixedAmount,
+      endDate,
+      productIds = [],
+      collectionIds = [],
       senderRequireMinPurchase,
       senderMinPurchaseAmount,
       senderTimesPerUser,
@@ -100,9 +103,6 @@ export const createCoupon = async (req, res) => {
       shareEmail,
       selectedProduct,
       customMessage,
-      endDate,
-      productIds = [],
-      collectionIds = [],
     } = req.body;
 
     const code = `${name.substring(0, 3).toUpperCase()}${Math.floor(
@@ -128,6 +128,9 @@ export const createCoupon = async (req, res) => {
       percentageValue:
         discountType === "percentage" ? percentageValue : undefined,
       fixedAmount: discountType === "fixed" ? fixedAmount : undefined,
+      endDate: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      productIds,
+      collectionIds,
       senderRequireMinPurchase,
       senderMinPurchaseAmount,
       senderTimesPerUser,
@@ -143,9 +146,6 @@ export const createCoupon = async (req, res) => {
       shareEmail,
       productId: selectedProduct,
       customMessage,
-      endDate: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      productIds,
-      collectionIds,
     });
 
     await newCoupon.save();
@@ -157,25 +157,20 @@ export const createCoupon = async (req, res) => {
       let customerGets = {};
       if (discountType === "percentage") {
         customerGets = {
-          value: { percentage: { value: Number(percentageValue) } },
+          value: { percentage: Number(percentageValue) },
           items: {
             all: false,
-            products: productIds,
-            collections: collectionIds,
+            ...(productIds.length ? { products: { add: productIds } } : {}),
+            ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
           },
         };
       } else {
         customerGets = {
-          value: {
-            fixedAmount: {
-              amount: Number(fixedAmount),
-              appliesOnEachItem: false,
-            },
-          },
+          value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
           items: {
             all: false,
-            products: productIds,
-            collections: collectionIds,
+            ...(productIds.length ? { products: { add: productIds } } : {}),
+            ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
           },
         };
       }
@@ -188,7 +183,7 @@ export const createCoupon = async (req, res) => {
               codeDiscount {
                 ... on DiscountCodeBasic {
                   title
-                  codes(first: 1) { nodes { code } }
+                  code
                   status
                 }
               }
@@ -201,7 +196,7 @@ export const createCoupon = async (req, res) => {
       const variables = {
         basicCodeDiscount: {
           title: name,
-          codes: [code],
+          code, // single string
           startsAt: new Date().toISOString(),
           endsAt: endDate ? new Date(endDate).toISOString() : undefined,
           customerGets,
@@ -221,27 +216,22 @@ export const createCoupon = async (req, res) => {
       const resp = data.body.data.discountCodeBasicCreate;
       if (resp.userErrors && resp.userErrors.length > 0) {
         console.error("Shopify discount creation errors:", resp.userErrors);
-      } else {
-        newCoupon.shopifyDiscountId = resp.codeDiscountNode.id;
-        await newCoupon.save();
-      }
-
-      if (resp.userErrors && resp.userErrors.length > 0) {
-        console.error("Shopify discount creation userErrors:", resp.userErrors);
-      }
-      if (data.body.errors || data.body.extensions?.cost?.throttleStatus?.currentlyThrottled) {
-        console.error("Shopify GraphQL errors:", data.body.errors);
-      }
-      if (data.body.errors || data.body.extensions?.cost?.throttleStatus?.currentlyThrottled || resp.userErrors?.length) {
         return res.status(400).json({
           success: false,
           message: "Shopify API error",
           userErrors: resp.userErrors,
-          graphQLErrors: data.body.errors,
         });
+      } else {
+        newCoupon.shopifyDiscountId = resp.codeDiscountNode.id;
+        await newCoupon.save();
       }
     } catch (e) {
       console.error("Failed to create Shopify Discount:", e);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create Shopify Discount",
+        error: e.message,
+      });
     }
     // --- End Shopify Discount creation ---
 
@@ -285,6 +275,9 @@ export const editCoupon = async (req, res) => {
       discountType,
       percentageValue,
       fixedAmount,
+      endDate,
+      productIds = [],
+      collectionIds = [],
       senderRequireMinPurchase,
       senderMinPurchaseAmount,
       senderTimesPerUser,
@@ -300,10 +293,7 @@ export const editCoupon = async (req, res) => {
       shareEmail,
       selectedProduct,
       customMessage,
-      endDate,
       isActive,
-      productIds,
-      collectionIds,
     } = req.body;
 
     const coupon = await Coupon.findOne({ _id: couponId, shop });
@@ -326,6 +316,9 @@ export const editCoupon = async (req, res) => {
         coupon.percentageValue = undefined;
       }
     }
+    if (endDate) coupon.endDate = endDate;
+    if (productIds) coupon.productIds = productIds;
+    if (collectionIds) coupon.collectionIds = collectionIds;
     if (senderRequireMinPurchase !== undefined)
       coupon.senderRequireMinPurchase = senderRequireMinPurchase;
     if (senderMinPurchaseAmount !== undefined)
@@ -351,10 +344,7 @@ export const editCoupon = async (req, res) => {
     if (shareEmail !== undefined) coupon.shareEmail = shareEmail;
     if (selectedProduct) coupon.productId = selectedProduct;
     if (customMessage !== undefined) coupon.customMessage = customMessage;
-    if (endDate) coupon.endDate = endDate;
     if (isActive !== undefined) coupon.isActive = isActive;
-    if (productIds) coupon.productIds = productIds;
-    if (collectionIds) coupon.collectionIds = collectionIds;
 
     await coupon.save();
 
@@ -365,25 +355,20 @@ export const editCoupon = async (req, res) => {
         let customerGets = {};
         if (discountType === "percentage") {
           customerGets = {
-            value: { percentage: { value: Number(percentageValue) } },
+            value: { percentage: Number(percentageValue) },
             items: {
               all: false,
-              products: productIds,
-              collections: collectionIds,
+              ...(productIds.length ? { products: { add: productIds } } : {}),
+              ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
             },
           };
         } else {
           customerGets = {
-            value: {
-              fixedAmount: {
-                amount: Number(fixedAmount),
-                appliesOnEachItem: false,
-              },
-            },
+            value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
             items: {
               all: false,
-              products: productIds,
-              collections: collectionIds,
+              ...(productIds.length ? { products: { add: productIds } } : {}),
+              ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
             },
           };
         }
@@ -396,7 +381,7 @@ export const editCoupon = async (req, res) => {
                 codeDiscount {
                   ... on DiscountCodeBasic {
                     title
-                    codes(first: 1) { nodes { code } }
+                    code
                     status
                   }
                 }
@@ -410,7 +395,7 @@ export const editCoupon = async (req, res) => {
           id: coupon.shopifyDiscountId,
           basicCodeDiscount: {
             title: coupon.name,
-            codes: [coupon.code],
+            code: coupon.code,
             startsAt: coupon.createdAt.toISOString(),
             endsAt: coupon.endDate
               ? new Date(coupon.endDate).toISOString()
@@ -432,9 +417,19 @@ export const editCoupon = async (req, res) => {
         const resp = data.body.data.discountCodeBasicUpdate;
         if (resp.userErrors && resp.userErrors.length > 0) {
           console.error("Shopify discount update errors:", resp.userErrors);
+          return res.status(400).json({
+            success: false,
+            message: "Shopify API error",
+            userErrors: resp.userErrors,
+          });
         }
       } catch (e) {
         console.error("Failed to update Shopify Discount:", e);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update Shopify Discount",
+          error: e.message,
+        });
       }
     }
 
