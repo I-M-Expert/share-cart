@@ -87,6 +87,17 @@ const filterOptions = [
   { label: "This Year", value: "year" },
 ];
 
+function useIsMobile(breakpoint = 600) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function Dashboard() {
   const [filter, setFilter] = useState("7d");
 
@@ -97,6 +108,7 @@ export default function Dashboard() {
   const couponsUsed = 45;
   const revenue = "$2,340";
 
+  const isMobile = useIsMobile();
 
   useEffect(() => {
       
@@ -143,6 +155,7 @@ export default function Dashboard() {
               <div
                 style={{
                   display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
                   gap: 24,
                   marginBottom: 32,
                   width: "100%",

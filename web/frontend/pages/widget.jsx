@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Page, Text, TextField, Banner, Spinner } from "@shopify/polaris";
+import { Card, Page, Text, TextField, Banner, Spinner, Layout } from "@shopify/polaris";
 import Sidebar from "../components/Sidebar";
 import { Icon } from "@iconify/react";
 import { logo } from "../assets";
@@ -287,287 +287,220 @@ export default function Widget() {
           {notification && (
             <Banner status={notification.status} title={notification.message} />
           )}
-          {loadingWidget ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 400,
-              }}
-            >
-              <Spinner
-                accessibilityLabel="Loading widget settings"
-                size="large"
-              />
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 32,
-                alignItems: "flex-start",
-              }}
-            >
-              {/* Settings Section */}
-              <Card title="Customize Widget" sectioned>
-                {/* Display Option */}
-                <div style={{ marginBottom: 24 }}>
-                  <Text variant="headingSm" as="h3">
-                    Select Display (Choose up to {allowedDisplayCount})
-                  </Text>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      marginTop: 8,
-                    }}
-                  >
-                    {DISPLAY_OPTIONS.map((opt) => (
-                      <label
-                        key={opt.value}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          opacity:
-                            display.length >= allowedDisplayCount &&
-                            !display.includes(opt.value)
-                              ? 0.5
-                              : 1,
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          name="display"
-                          value={opt.value}
-                          checked={display.includes(opt.value)}
-                          disabled={
-                            display.length >= allowedDisplayCount &&
-                            !display.includes(opt.value)
-                          }
-                          onChange={() => handleDisplayChange(opt.value)}
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Text Option */}
-                <div style={{ marginBottom: 24 }}>
-                  <Text variant="headingSm" as="h3">
-                    Select Text
-                  </Text>
-                  <TextField
-                    value={text}
-                    onChange={setText}
-                    multiline={2}
-                    autoComplete="off"
-                  />
-                </div>
-
-                {/* Appearance */}
-                <div style={{ marginBottom: 24 }}>
-                  <Text variant="headingSm" as="h3">
-                    Select Appearance
-                  </Text>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 20,
-                      flexWrap: "wrap",
-                      marginTop: 8,
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div class="d-flex flex-column gap-2">
-                      <label>Button Color</label>
-                      <input
-                        type="color"
-                        value={colors.button}
-                        onChange={(e) =>
-                          handleColorChange("button", e.target.value)
-                        }
-                        style={{
-                          width: 40,
-                          height: 32,
-                          border: "none",
-                          marginLeft: 8,
-                        }}
-                      />
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                      <label>Background Color</label>
-                      <input
-                        type="color"
-                        value={colors.background}
-                        onChange={(e) =>
-                          handleColorChange("background", e.target.value)
-                        }
-                        style={{
-                          width: 40,
-                          height: 32,
-                          border: "none",
-                          marginLeft: 8,
-                        }}
-                      />
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                      <label>Button Text</label>
-                      <input
-                        type="color"
-                        value={colors.buttonText}
-                        onChange={(e) =>
-                          handleColorChange("buttonText", e.target.value)
-                        }
-                        style={{
-                          width: 40,
-                          height: 32,
-                          border: "none",
-                          marginLeft: 8,
-                        }}
-                      />
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                      <label>Text Color</label>
-                      <input
-                        type="color"
-                        value={colors.text}
-                        onChange={(e) =>
-                          handleColorChange("text", e.target.value)
-                        }
-                        style={{
-                          width: 40,
-                          height: 32,
-                          border: "none",
-                          marginLeft: 8,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Button Style */}
-                <div style={{ marginBottom: 24 }}>
-                  <Text variant="headingSm" as="h3">
-                    Select Button Style
-                  </Text>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      marginTop: 8,
-                    }}
-                  >
-                    {BUTTON_STYLE_OPTIONS.map((opt) => (
-                      <label
-                        key={opt.value}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="buttonStyle"
-                          value={opt.value}
-                          checked={buttonStyle === opt.value}
-                          onChange={() => setButtonStyle(opt.value)}
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="d-flex jcfe aic" style={{ width: "100%" }}>
-                  <Button
-                    style={{ borderRadius: 8 }}
-                    onClick={handleSave}
-                    loading={saving}
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </Card>
-
-              {/* Preview Section */}
-              <Card title={"Widget Preview"} sectioned>
-                {["add_to_cart", "checkout"].includes(previewDisplay) ? (
-                  // Pop-up style preview
-                  <div
-                    style={{
-                      background: colors.background,
-                      borderRadius: 16,
-                      padding: 32,
-                      minHeight: 320,
-                      width: 340,
-                      margin: "0 auto",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 24,
-                      position: "relative",
-                    }}
-                  >
-                    <p
+          {!loadingWidget && (
+            <Layout>
+              <Layout.Section oneHalf>
+                <Card title="Customize Widget" sectioned>
+                  {/* Display Option */}
+                  <div style={{ marginBottom: 24 }}>
+                    <Text variant="headingSm" as="h3">
+                      Select Display (Choose up to {allowedDisplayCount})
+                    </Text>
+                    <div
                       style={{
-                        color: colors.text,
-                        fontSize: 18,
-                        marginBottom: 16,
-                        textAlign: "center",
-                      }}
-                    >
-                      {text}
-                    </p>
-                    <div className="d-flex jcc">
-                      <ShareButtons
-                        buttonStyle={buttonStyle}
-                        direction="column"
-                        colors={colors}
-                        coupon={coupon}
-                      />
-                    </div>
-                    <p
-                      style={{
-                        color: colors.text,
-                        fontSize: 18,
-                        marginBottom: 12,
-                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
                         marginTop: 8,
                       }}
                     >
-                      No thanks! I prefer not to get a discount
-                    </p>
+                      {DISPLAY_OPTIONS.map((opt) => (
+                        <label
+                          key={opt.value}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            opacity:
+                              display.length >= allowedDisplayCount &&
+                              !display.includes(opt.value)
+                                ? 0.5
+                                : 1,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            name="display"
+                            value={opt.value}
+                            checked={display.includes(opt.value)}
+                            disabled={
+                              display.length >= allowedDisplayCount &&
+                              !display.includes(opt.value)
+                            }
+                            onChange={() => handleDisplayChange(opt.value)}
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  // Page widget style preview
-                  <div
-                    style={{
-                      background: colors.background,
-                      borderRadius: 12,
-                      padding: 24,
-                      minHeight: 180,
-                      width: "100%",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 24,
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
+
+                  {/* Text Option */}
+                  <div style={{ marginBottom: 24 }}>
+                    <Text variant="headingSm" as="h3">
+                      Select Text
+                    </Text>
+                    <TextField
+                      value={text}
+                      onChange={setText}
+                      multiline={2}
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {/* Appearance */}
+                  <div style={{ marginBottom: 24 }}>
+                    <Text variant="headingSm" as="h3">
+                      Select Appearance
+                    </Text>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 20,
+                        flexWrap: "wrap",
+                        marginTop: 8,
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div class="d-flex flex-column gap-2">
+                        <label>Button Color</label>
+                        <input
+                          type="color"
+                          value={colors.button}
+                          onChange={(e) =>
+                            handleColorChange("button", e.target.value)
+                          }
+                          style={{
+                            width: 40,
+                            height: 32,
+                            border: "none",
+                            marginLeft: 8,
+                          }}
+                        />
+                      </div>
+                      <div class="d-flex flex-column gap-2">
+                        <label>Background Color</label>
+                        <input
+                          type="color"
+                          value={colors.background}
+                          onChange={(e) =>
+                            handleColorChange("background", e.target.value)
+                          }
+                          style={{
+                            width: 40,
+                            height: 32,
+                            border: "none",
+                            marginLeft: 8,
+                          }}
+                        />
+                      </div>
+                      <div class="d-flex flex-column gap-2">
+                        <label>Button Text</label>
+                        <input
+                          type="color"
+                          value={colors.buttonText}
+                          onChange={(e) =>
+                            handleColorChange("buttonText", e.target.value)
+                          }
+                          style={{
+                            width: 40,
+                            height: 32,
+                            border: "none",
+                            marginLeft: 8,
+                          }}
+                        />
+                      </div>
+                      <div class="d-flex flex-column gap-2">
+                        <label>Text Color</label>
+                        <input
+                          type="color"
+                          value={colors.text}
+                          onChange={(e) =>
+                            handleColorChange("text", e.target.value)
+                          }
+                          style={{
+                            width: 40,
+                            height: 32,
+                            border: "none",
+                            marginLeft: 8,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Button Style */}
+                  <div style={{ marginBottom: 24 }}>
+                    <Text variant="headingSm" as="h3">
+                      Select Button Style
+                    </Text>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                        marginTop: 8,
+                      }}
+                    >
+                      {BUTTON_STYLE_OPTIONS.map((opt) => (
+                        <label
+                          key={opt.value}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="buttonStyle"
+                            value={opt.value}
+                            checked={buttonStyle === opt.value}
+                            onChange={() => setButtonStyle(opt.value)}
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="d-flex jcfe aic" style={{ width: "100%" }}>
+                    <Button
+                      style={{ borderRadius: 8 }}
+                      onClick={handleSave}
+                      loading={saving}
+                    >
+                      {saving ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </Card>
+              </Layout.Section>
+              <Layout.Section oneHalf>
+                <Card title="Widget Preview" sectioned>
+                  {["add_to_cart", "checkout"].includes(previewDisplay) ? (
+                    // Pop-up style preview
+                    <div
+                      style={{
+                        background: colors.background,
+                        borderRadius: 16,
+                        padding: 32,
+                        minHeight: 320,
+                        width: 340,
+                        margin: "0 auto",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 24,
+                        position: "relative",
+                      }}
+                    >
                       <p
                         style={{
                           color: colors.text,
                           fontSize: 18,
-                          marginBottom: 12,
+                          marginBottom: 16,
+                          textAlign: "center",
                         }}
                       >
                         {text}
@@ -575,7 +508,7 @@ export default function Widget() {
                       <div className="d-flex jcc">
                         <ShareButtons
                           buttonStyle={buttonStyle}
-                          direction="row"
+                          direction="column"
                           colors={colors}
                           coupon={coupon}
                         />
@@ -592,10 +525,57 @@ export default function Widget() {
                         No thanks! I prefer not to get a discount
                       </p>
                     </div>
-                  </div>
-                )}
-              </Card>
-            </div>
+                  ) : (
+                    // Page widget style preview
+                    <div
+                      style={{
+                        background: colors.background,
+                        borderRadius: 12,
+                        padding: 24,
+                        minHeight: 180,
+                        width: "100%",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 24,
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <p
+                          style={{
+                            color: colors.text,
+                            fontSize: 18,
+                            marginBottom: 12,
+                          }}
+                        >
+                          {text}
+                        </p>
+                        <div className="d-flex jcc">
+                          <ShareButtons
+                            buttonStyle={buttonStyle}
+                            direction="row"
+                            colors={colors}
+                            coupon={coupon}
+                          />
+                        </div>
+                        <p
+                          style={{
+                            color: colors.text,
+                            fontSize: 18,
+                            marginBottom: 12,
+                            textAlign: "center",
+                            marginTop: 8,
+                          }}
+                        >
+                          No thanks! I prefer not to get a discount
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </Layout.Section>
+            </Layout>
           )}
         </Page>
         {/* <div className="d-flex justify-content-end mt-4">
