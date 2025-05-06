@@ -34,17 +34,18 @@
 
   async function restoreCart() {
     const cartData = getCartData();
-    if (!cartData) {
-      document.getElementById("share-cart-app").innerText =
-        "Invalid or missing cart data.";
+    const params = new URLSearchParams(window.location.search);
+    const discount = params.get("discount");
+    const appDiv = document.getElementById("share-cart-app");
+    if (!cartData || !cartData.items) {
+      if (appDiv) appDiv.innerText = "Invalid or missing cart data.";
       return;
     }
-    document.getElementById("share-cart-app").innerText =
-      "Restoring your cart...";
+    if (appDiv) appDiv.innerText = "Restoring your cart...";
     await clearCart();
     await addItems(cartData.items);
-    await applyDiscount(cartData.discount);
+    await applyDiscount(discount || cartData.discount);
   }
 
-  restoreCart();
+  document.addEventListener("DOMContentLoaded", restoreCart);
 })();

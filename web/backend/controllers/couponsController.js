@@ -2,6 +2,7 @@ import Coupon from '../models/Coupon.js';
 import Subscription from '../models/Subscription.js';
 import UserSubscription from '../models/UserSubscription.js';
 import Widget from '../models/Widget.js';
+import shopify from '../../shopify.js'; // Adjust import as needed
 
 /**
  * Get all coupons for the current shop
@@ -120,6 +121,14 @@ export const createCoupon = async (req, res) => {
     // Generate a coupon code (simple implementation)
     const code = `${name.substring(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
     
+    // Check for at least one product or collection
+    if ((!productIds || productIds.length === 0) && (!collectionIds || collectionIds.length === 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You must select at least one product or collection for the discount to apply.'
+      });
+    }
+    
     // Create new coupon
     const newCoupon = new Coupon({
       shop,
@@ -149,7 +158,110 @@ export const createCoupon = async (req, res) => {
     });
     
     await newCoupon.save();
-    
+
+    // --- Create App Discount in Shopify ---
+    try {
+      const client = new shopify.api.clients.Graphql({ session });
+
+      // Build targets array
+      let targets = [];
+      if (productIds && productIds.length > 0) {
+        targets.push({
+          productVariant: {
+            productVariantIds: productIds.map(id => `gid://shopify/ProductVariant/${id}`)
+          }
+        });
+      }
+
+      // Fetch product variants for selected collections
+      if (collectionIds && collectionIds.length > 0) {
+        // You need to implement this: fetch all product variant IDs in these collections
+        const variantsFromCollections = await getProductVariantIdsFromCollections(collectionIds, session);
+        if (variantsFromCollections.length > 0) {
+          targets.push({
+            productVariant: {
+              productVariantIds: variantsFromCollections
+            }
+          });
+        }
+      }
+
+      // Build metafields for function configuration
+      const metafields = [
+        {
+          namespace: "default",
+          key: "function-configuration",
+          type: "json",
+          value: JSON.stringify({
+            discounts: [
+              {
+                value: discountType === "percentage"
+                  ? { percentage: Number(percentageValue) }
+                  : { fixedAmount: { amount: Number(fixedAmount) } },
+                targets
+              }
+            ],
+            discountApplicationStrategy: "FIRST"
+          })
+        }
+      ];
+
+      const mutation = `
+        mutation discountCodeAppCreate($codeAppDiscount: DiscountCodeAppInput!) {
+          discountCodeAppCreate(codeAppDiscount: $codeAppDiscount) {
+            codeAppDiscount {
+              discountId
+              title
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const variables = {
+        codeAppDiscount: {
+          code,
+          title: name,
+          functionId: process.env.SHOPIFY_FUNCTION_ID, // Set your functionId in env
+          appliesOncePerCustomer: true,
+          combinesWith: {
+            orderDiscounts: true,
+            productDiscounts: true,
+            shippingDiscounts: true
+          },
+          startsAt: new Date().toISOString(),
+          endsAt: endDate ? new Date(endDate).toISOString() : undefined,
+          usageLimit: 1,
+          metafields
+        }
+      };
+
+      const data = await client.query({
+        data: {
+          query: mutation,
+          variables
+        }
+      });
+
+      const userErrors = data.body.data.discountCodeAppCreate.userErrors;
+      if (userErrors && userErrors.length > 0) {
+        console.error("Shopify discount creation errors:", userErrors);
+        // Optionally: handle error, rollback, or notify user
+      } else {
+        // Optionally: store discountId in your coupon for future reference
+        newCoupon.shopifyDiscountId = data.body.data.discountCodeAppCreate.codeAppDiscount.discountId;
+        await newCoupon.save();
+      }
+    } catch (e) {
+      console.error("Failed to create Shopify App Discount:", e);
+      // Optionally: handle error, rollback, or notify user
+    }
+    // --- End Shopify App Discount creation ---
+
     return res.status(201).json({
       success: true,
       message: 'Coupon created successfully',
@@ -273,6 +385,104 @@ export const editCoupon = async (req, res) => {
     
     // Save the updated coupon
     await coupon.save();
+    
+    if (coupon.shopifyDiscountId) {
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+    
+        // Build targets array
+        let targets = [];
+        if (productIds && productIds.length > 0) {
+          targets.push({
+            productVariant: {
+              productVariantIds: productIds.map(id => `gid://shopify/ProductVariant/${id}`)
+            }
+          });
+        }
+
+        // Fetch product variants for selected collections
+        if (collectionIds && collectionIds.length > 0) {
+          // You need to implement this: fetch all product variant IDs in these collections
+          const variantsFromCollections = await getProductVariantIdsFromCollections(collectionIds, session);
+          if (variantsFromCollections.length > 0) {
+            targets.push({
+              productVariant: {
+                productVariantIds: variantsFromCollections
+              }
+            });
+          }
+        }
+
+        // Build metafields for function configuration
+        const metafields = [
+          {
+            namespace: "default",
+            key: "function-configuration",
+            type: "json",
+            value: JSON.stringify({
+              discounts: [
+                {
+                  value: coupon.discountType === "percentage"
+                    ? { percentage: Number(coupon.percentageValue) }
+                    : { fixedAmount: { amount: Number(coupon.fixedAmount) } },
+                  targets
+                }
+              ],
+              discountApplicationStrategy: "FIRST"
+            })
+          }
+        ];
+    
+        const mutation = `
+          mutation discountCodeAppUpdate($codeAppDiscount: DiscountCodeAppInput!, $id: ID!) {
+            discountCodeAppUpdate(codeAppDiscount: $codeAppDiscount, id: $id) {
+              codeAppDiscount {
+                discountId
+                title
+                endsAt
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `;
+    
+        const variables = {
+          id: coupon.shopifyDiscountId,
+          codeAppDiscount: {
+            code: coupon.code,
+            title: coupon.name,
+            functionId: process.env.SHOPIFY_FUNCTION_ID,
+            appliesOncePerCustomer: true,
+            combinesWith: {
+              orderDiscounts: true,
+              productDiscounts: true,
+              shippingDiscounts: true
+            },
+            startsAt: coupon.createdAt.toISOString(),
+            endsAt: coupon.endDate ? new Date(coupon.endDate).toISOString() : undefined,
+            usageLimit: 1,
+            metafields
+          }
+        };
+    
+        const data = await client.query({
+          data: {
+            query: mutation,
+            variables
+          }
+        });
+    
+        const userErrors = data.body.data.discountCodeAppUpdate.userErrors;
+        if (userErrors && userErrors.length > 0) {
+          console.error("Shopify discount update errors:", userErrors);
+        }
+      } catch (e) {
+        console.error("Failed to update Shopify App Discount:", e);
+      }
+    }
     
     return res.status(200).json({
       success: true,
@@ -435,9 +645,64 @@ export const activateCoupon = async (req, res) => {
     if(updated){
         await Widget.findOneAndUpdate({shop}, {coupon: updated._id}, {new: true});
     }
+
+    // ...after activating the coupon in MongoDB...
+
+    if (updated && updated.shopifyDiscountId) {
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+
+        const mutation = `
+          mutation discountCodeActivate($id: ID!) {
+            discountCodeActivate(id: $id) {
+              codeDiscountNode {
+                codeDiscount {
+                  ... on DiscountCodeApp {
+                    title
+                    status
+                    startsAt
+                    endsAt
+                  }
+                }
+              }
+              userErrors {
+                field
+                code
+                message
+              }
+            }
+          }
+        `;
+
+        const variables = {
+          id: updated.shopifyDiscountId
+        };
+
+        const data = await client.query({
+          data: {
+            query: mutation,
+            variables
+          }
+        });
+
+        const userErrors = data.body.data.discountCodeActivate.userErrors;
+        if (userErrors && userErrors.length > 0) {
+          console.error("Shopify discount activation errors:", userErrors);
+        }
+      } catch (e) {
+        console.error("Failed to activate Shopify App Discount:", e);
+      }
+    }
+
     return res.status(200).json({ success: true, message: 'Coupon activated', coupon: updated });
   } catch (error) {
     console.error('Error activating coupon:', error);
     return res.status(500).json({ success: false, message: 'An error occurred while activating coupon', error: error.message });
   }
 };
+
+// Helper function (pseudo-code)
+async function getProductVariantIdsFromCollections(collectionIds, session) {
+  // Use Shopify API to fetch products in each collection, then get their variant IDs
+  // Return an array of variant GIDs
+}

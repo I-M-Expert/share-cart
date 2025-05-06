@@ -20,6 +20,7 @@ import {
   ChoiceList
 } from '@shopify/polaris';
 import CustomButton from "../../components/form/Button";
+import AssignModal from "../../components/AssignModal";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -61,6 +62,12 @@ export default function Create() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedCollections, setSelectedCollections] = useState([]);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
+  const [collections, setCollections] = useState([]);
+
   
   // Replace hardcoded product options with dynamic ones
   const productOptions = products.map(product => ({
@@ -172,8 +179,7 @@ export default function Create() {
     fetchProductsData();
   }, []);
 
-  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
-  const [collections, setCollections] = useState([]);
+  
 
   useEffect(() => {
     const fetchCollectionsData = async () => {
@@ -222,13 +228,13 @@ export default function Create() {
           <Page
             title="Create Coupon"
             primaryAction={
-              <CustomButton 
-                primary 
-                onClick={handleSubmit} 
+              <CustomButton
+                primary
+                onClick={handleSubmit}
                 loading={isLoading}
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : 'Save'}
+                {isLoading ? "Saving..." : "Save"}
               </CustomButton>
             }
           >
@@ -403,21 +409,47 @@ export default function Create() {
                 <Box paddingBlock="4">
                   <Card sectioned>
                     <VerticalStack gap="4">
-                      <ChoiceList
-                        title="Assign Products"
-                        choices={productOptions}
-                        selected={selectedProducts}
-                        onChange={setSelectedProducts}
-                        allowMultiple
+                      <Button
+                        onClick={() => setShowProductModal(true)}
                         disabled={isLoadingProducts}
+                      >
+                        Assign Products{" "}
+                        {selectedProducts.length > 0
+                          ? `(${selectedProducts.length} selected)`
+                          : ""}
+                      </Button>
+                      <AssignModal
+                        open={showProductModal}
+                        onClose={() => setShowProductModal(false)}
+                        items={productOptions}
+                        selected={selectedProducts}
+                        onSave={(values) => {
+                          setSelectedProducts(values);
+                          setShowProductModal(false);
+                        }}
+                        title="Assign Products"
+                        loading={isLoadingProducts}
                       />
-                      <ChoiceList
-                        title="Assign Collections"
-                        choices={collectionOptions}
-                        selected={selectedCollections}
-                        onChange={setSelectedCollections}
-                        allowMultiple
+                      <Button
+                        onClick={() => setShowCollectionModal(true)}
                         disabled={isLoadingCollections}
+                      >
+                        Assign Collections{" "}
+                        {selectedCollections.length > 0
+                          ? `(${selectedCollections.length} selected)`
+                          : ""}
+                      </Button>
+                      <AssignModal
+                        open={showCollectionModal}
+                        onClose={() => setShowCollectionModal(false)}
+                        items={collectionOptions}
+                        selected={selectedCollections}
+                        onSave={(values) => {
+                          setSelectedCollections(values);
+                          setShowCollectionModal(false);
+                        }}
+                        title="Assign Collections"
+                        loading={isLoadingCollections}
                       />
                     </VerticalStack>
                   </Card>
@@ -465,9 +497,9 @@ export default function Create() {
               </Layout.Section>
             </Layout>
           </Page>
-          <div className="d-flex justify-content-end mt-4">
+          {/* <div className="d-flex justify-content-end mt-4">
             <img src={logo} alt="share cart logo" width="200px" />
-          </div>
+          </div> */}
         </main>
         {toastMarkup}
       </div>

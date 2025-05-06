@@ -21,6 +21,7 @@ import {
   ChoiceList
 } from '@shopify/polaris';
 import CustomButton from "../../components/form/Button";
+import AssignModal from "../../components/AssignModal";
 
 export default function Edit() {
   const navigate = useNavigate();
@@ -97,6 +98,9 @@ export default function Edit() {
 
   // Message customization
   const [customMessage, setCustomMessage] = useState("");
+
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
 
   // Fetch coupon data on component mount
   useEffect(() => {
@@ -573,21 +577,35 @@ export default function Edit() {
                 <Box paddingBlock="4">
                   <Card sectioned>
                     <VerticalStack gap="4">
-                      <ChoiceList
-                        title="Assign Products"
-                        choices={productOptions}
+                      <Button onClick={() => setShowProductModal(true)} disabled={isLoadingProducts}>
+                        Assign Products {selectedProducts.length > 0 ? `(${selectedProducts.length} selected)` : ""}
+                      </Button>
+                      <AssignModal
+                        open={showProductModal}
+                        onClose={() => setShowProductModal(false)}
+                        items={productOptions}
                         selected={selectedProducts}
-                        onChange={setSelectedProducts}
-                        allowMultiple
-                        disabled={isLoadingProducts}
+                        onSave={(values) => {
+                          setSelectedProducts(values);
+                          setShowProductModal(false);
+                        }}
+                        title="Assign Products"
+                        loading={isLoadingProducts}
                       />
-                      <ChoiceList
-                        title="Assign Collections"
-                        choices={collectionOptions}
+                      <Button onClick={() => setShowCollectionModal(true)} disabled={isLoadingCollections}>
+                        Assign Collections {selectedCollections.length > 0 ? `(${selectedCollections.length} selected)` : ""}
+                      </Button>
+                      <AssignModal
+                        open={showCollectionModal}
+                        onClose={() => setShowCollectionModal(false)}
+                        items={collectionOptions}
                         selected={selectedCollections}
-                        onChange={setSelectedCollections}
-                        allowMultiple
-                        disabled={isLoadingCollections}
+                        onSave={(values) => {
+                          setSelectedCollections(values);
+                          setShowCollectionModal(false);
+                        }}
+                        title="Assign Collections"
+                        loading={isLoadingCollections}
                       />
                     </VerticalStack>
                   </Card>
@@ -635,9 +653,9 @@ export default function Edit() {
               </Layout.Section>
             </Layout>
           </Page>
-          <div className="d-flex justify-content-end mt-4">
+          {/* <div className="d-flex justify-content-end mt-4">
             <img src={logo} alt="share cart logo" width="200px" />
-          </div>
+          </div> */}
         </main>
         {toastMarkup}
       </div>

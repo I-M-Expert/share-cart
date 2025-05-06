@@ -213,21 +213,7 @@ export default function Widget() {
   }, []);
 
   // Add this function inside your Widget component
-  const generateShareCartUrl = async (coupon) => {
-    // Fetch current cart (Shopify AJAX API)
-    const res = await fetch("/cart.js");
-    const cart = await res.json();
-    const cartData = {
-      items: cart.items.map((item) => ({
-        id: item.id,
-        quantity: item.quantity,
-      })),
-      discount: coupon?.code || null,
-    };
-    const encoded = btoa(JSON.stringify(cartData));
-    // You may want to use shop domain dynamically if available
-    return `/tools/share-cart?cart=${encoded}`;
-  };
+  
 
   // Handle color changes
   const handleColorChange = (key, value) => {
@@ -239,8 +225,6 @@ export default function Widget() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Generate shareCartUrl before saving
-      const shareCartUrl = await generateShareCartUrl(coupon);
 
       const res = await fetch("/api/widgets", {
         method: "POST",
@@ -250,19 +234,20 @@ export default function Widget() {
           buttonStyle,
           text,
           colors,
-          shareCartUrl,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setNotification({ status: "success", message: "Settings saved!" });
       } else {
+        console.log("Failed to save settings", data);
         setNotification({
           status: "critical",
           message: data.message || "Failed to save settings.",
         });
       }
     } catch (err) {
+      console.log('Failed to save settings', err)
       setNotification({
         status: "critical",
         message: "Failed to save settings.",
