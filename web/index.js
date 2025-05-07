@@ -16,6 +16,7 @@ import collectionRoutes from "./backend/routes/collectionRoutes.js";
 import widgetRoutes from "./backend/routes/widgetRoutes.js";
 import analyticsRoutes from './backend/routes/analyticsRoutes.js';
 import { registerWebhooks } from "./helpers/webhookRegistration.js";
+import cors from "cors"; 
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -28,6 +29,19 @@ const STATIC_PATH =
     : `${process.cwd()}/frontend/`;
 
 const app = express();
+
+app.use(
+  cors({
+    origin: [
+      /\.myshopify\.com$/, // Allow all myshopify.com domains
+      /cloudfront\.net$/, // For Shopify CDN
+      /shopifycdn\.com$/, // For Shopify CDN
+    ],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
