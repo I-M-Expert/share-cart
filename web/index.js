@@ -43,7 +43,7 @@ app.use(
   })
 );
 
-app.use("/analytics", analyticsRoutes);
+
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
@@ -101,6 +101,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use("/analytics", analyticsRoutes);
 
 // Global middleware to log all incoming requests
 app.use((req, res, next) => {
