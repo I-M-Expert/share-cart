@@ -18,7 +18,7 @@ import {
 import BrushIcon from "../components/svgs/BrushIcon";
 import { useNavigate } from "react-router-dom";
 import CouponIcon from "../components/svgs/CouponIcon";
-import { useAuthenticatedFetch } from "../hooks";
+
 
 ChartJS.register(
   CategoryScale,
@@ -63,7 +63,7 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   
-  const fetch = useAuthenticatedFetch();
+  
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
