@@ -77,7 +77,7 @@ const handleSelectPlan = async (id) => {
               className="col-lg-3 col-md-3 col-sm-12 m-3"
               style={{
                 background:
-                  subscription.name.toLowerCase() === "growth" ? "#00c2b9" : "",
+                  subscription.name.toLowerCase() === "growth" ? "#32c6ce" : "",
                 borderRadius: "12px",
                 cursor: "pointer",
                 flexGrow: 1,

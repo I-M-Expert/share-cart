@@ -114,7 +114,7 @@ const Sidebar = () => {
             className="d-flex align-items-center my-3"
             style={{
               width: "100%",
-              backgroundColor: isActive ? "#00c2b9" : "transparent",
+              backgroundColor: isActive ? "#32c6ce" : "transparent",
               borderRadius: "8px",
               height: "36px",
               padding: "12px 1px",

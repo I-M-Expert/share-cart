@@ -7,7 +7,7 @@ const widgetSchema = mongoose.Schema(
     buttonStyle: { type: String, default: "text_logo_custom" },
     text: { type: String, default: "" },
     colors: {
-      button: { type: String, default: "#00c2b9" },
+      button: { type: String, default: "#32c6ce" },
       background: { type: String, default: "#FBFBFB" },
       buttonText: { type: String, default: "#fff" },
       text: { type: String, default: "#212121" },

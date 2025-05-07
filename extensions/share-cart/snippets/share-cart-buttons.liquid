@@ -17,52 +17,55 @@
 {% endcapture %}
 
 <div style="{{ flex_style | strip_newlines }}">
-  {% assign btn_bg = colors.button | default: '#00c2b9' %}
+  {% assign btn_bg = colors.button | default: '#32c6ce' %}
   {% assign btn_text = colors.buttonText | default: '#fff' %}
+  {% assign whatsapp_link = "https://wa.me/?text=" | append: share_message %}
+  {% assign messenger_link = "https://m.me/?link=" | append: share_cart_link %}
+  {% assign email_link = "mailto:?subject=Check out my cart!&body=" | append: share_message %}
 
   {% if button_style == 'text_logo_custom' %}
-    <a data-share="email" href="mailto:?subject={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
+    <a href="{{ email_link }}" data-share="email" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%;">
         <svg width="24" height="24" fill="currentColor" style="margin-right: 4px;" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l8 7 8-7V20H4z"/></svg>
         <span>Email</span>
       </button>
     </a>
-    <a data-share="whatsapp" href="https://wa.me/?text={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
+    <a href="{{ whatsapp_link }}" data-share="whatsapp" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%;">
         <svg width="24" height="24" fill="currentColor" style="margin-right: 4px;" viewBox="0 0 24 24"><path d="M12.004 2.003c-5.523 0-10 4.477-10 10 0 1.768.464 3.45 1.344 4.938l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A9.953 9.953 0 0 0 12.004 22c5.523 0 10-4.477 10-10s-4.477-9.997-10-9.997zm5.197 14.197c-.219.617-1.277 1.211-1.781 1.289-.484.078-1.094.109-1.766-.109-.406-.125-.922-.297-1.594-.594-2.797-1.219-4.625-4.016-4.766-4.203-.141-.188-1.141-1.516-1.141-2.891 0-1.375.719-2.047.969-2.328.25-.281.547-.344.734-.344.188 0 .359.016.516.016.156 0 .391-.062.609.469.219.531.75 1.844.812 1.984.062.141.125.312.031.5-.094.188-.141.297-.266.469-.125.172-.266.391-.375.531-.125.156-.266.328-.109.609.156.281.703 1.156 1.516 1.875 1.047.938 1.922 1.234 2.203 1.375.281.141.438.125.609-.078.172-.203.703-.812.891-1.094.188-.281.375-.234.609-.141.234.094 1.484.703 1.734.828.25.125.406.188.469.297.062.109.062.625-.156 1.242z"/></svg>
         <span>WhatsApp</span>
       </button>
     </a>
-    <a data-share="messenger" href="https://m.me/?link={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
+    <a href="{{ messenger_link }}" data-share="messenger" target="_blank" rel="noopener noreferrer" style="text-decoration: none; width: 100%;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%;">
         <svg width="24" height="24" fill="currentColor" style="margin-right: 4px;" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.037 2 11.5c0 2.25.797 4.313 2.156 5.969l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A10.97 10.97 0 0 0 12 21c5.523 0 10-4.037 10-9.5S17.523 2 12 2zm.016 15.5c-1.016 0-2.016-.188-2.938-.531l-.203-.078-3.047.828.828-3.047-.078-.203C5.688 13.516 5.5 12.516 5.5 11.5c0-3.594 3.594-6.5 8-6.5s8 2.906 8 6.5-3.594 6.5-8 6.5z"/></svg>
         <span>Messenger</span>
       </button>
     </a>
   {% elsif button_style == 'logo_custom' %}
-    <a data-share="email" href="mailto:?subject={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ email_link }}" data-share="email" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px;">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l8 7 8-7V20H4z"/></svg>
       </button>
     </a>
-    <a data-share="whatsapp" href="https://wa.me/?text={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ whatsapp_link }}" data-share="whatsapp" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px;">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12.004 2.003c-5.523 0-10 4.477-10 10 0 1.768.464 3.45 1.344 4.938l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A9.953 9.953 0 0 0 12.004 22c5.523 0 10-4.477 10-10s-4.477-9.997-10-9.997zm5.197 14.197c-.219.617-1.277 1.211-1.781 1.289-.484.078-1.094.109-1.766-.109-.406-.125-.922-.297-1.594-.594-2.797-1.219-4.625-4.016-4.766-4.203-.141-.188-1.141-1.516-1.141-2.891 0-1.375.719-2.047.969-2.328.25-.281.547-.344.734-.344.188 0 .359.016.516.016.156 0 .391-.062.609.469.219.531.75 1.844.812 1.984.062.141.125.312.031.5-.094.188-.141.297-.266.469-.125.172-.266.391-.375.531-.125.156-.266.328-.109.609.156.281.703 1.156 1.516 1.875 1.047.938 1.922 1.234 2.203 1.375.281.141.438.125.609-.078.172-.203.703-.812.891-1.094.188-.281.375-.234.609-.141.234.094 1.484.703 1.734.828.25.125.406.188.469.297.062.109.062.625-.156 1.242z"/></svg>
       </button>
     </a>
-    <a data-share="messenger" href="https://m.me/?link={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ messenger_link }}" data-share="messenger" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <button style="display: flex; align-items: center; gap: 8px; background: {{ btn_bg }}; color: {{ btn_text }}; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 16px;">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.037 2 11.5c0 2.25.797 4.313 2.156 5.969l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A10.97 10.97 0 0 0 12 21c5.523 0 10-4.037 10-9.5S17.523 2 12 2zm.016 15.5c-1.016 0-2.016-.188-2.938-.531l-.203-.078-3.047.828.828-3.047-.078-.203C5.688 13.516 5.5 12.516 5.5 11.5c0-3.594 3.594-6.5 8-6.5s8 2.906 8 6.5-3.594 6.5-8 6.5z"/></svg>
       </button>
     </a>
   {% else %}
-    <a data-share="email" href="mailto:?subject={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ email_link }}" data-share="email" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l8 7 8-7V20H4z"/></svg>
     </a>
-    <a data-share="whatsapp" href="https://wa.me/?text={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ whatsapp_link }}" data-share="whatsapp" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M12.004 2.003c-5.523 0-10 4.477-10 10 0 1.768.464 3.45 1.344 4.938l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A9.953 9.953 0 0 0 12.004 22c5.523 0 10-4.477 10-10s-4.477-9.997-10-9.997zm5.197 14.197c-.219.617-1.277 1.211-1.781 1.289-.484.078-1.094.109-1.766-.109-.406-.125-.922-.297-1.594-.594-2.797-1.219-4.625-4.016-4.766-4.203-.141-.188-1.141-1.516-1.141-2.891 0-1.375.719-2.047.969-2.328.25-.281.547-.344.734-.344.188 0 .359.016.516.016.156 0 .391-.062.609.469.219.531.75 1.844.812 1.984.062.141.125.312.031.5-.094.188-.141.297-.266.469-.125.172-.266.391-.375.531-.125.156-.266.328-.109.609.156.281.703 1.156 1.516 1.875 1.047.938 1.922 1.234 2.203 1.375.281.141.438.125.609-.078.172-.203.703-.812.891-1.094.188-.281.375-.234.609-.141.234.094 1.484.703 1.734.828.25.125.406.188.469.297.062.109.062.625-.156 1.242z"/></svg>
     </a>
-    <a data-share="messenger" href="https://m.me/?link={{ share_message }}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <a href="{{ messenger_link }}" data-share="messenger" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.037 2 11.5c0 2.25.797 4.313 2.156 5.969l-1.406 5.156a1 1 0 0 0 1.219 1.219l5.156-1.406A10.97 10.97 0 0 0 12 21c5.523 0 10-4.037 10-9.5S17.523 2 12 2zm.016 15.5c-1.016 0-2.016-.188-2.938-.531l-.203-.078-3.047.828.828-3.047-.078-.203C5.688 13.516 5.5 12.516 5.5 11.5c0-3.594 3.594-6.5 8-6.5s8 2.906 8 6.5-3.594 6.5-8 6.5z"/></svg>
     </a>
   {% endif %}

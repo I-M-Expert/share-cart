@@ -38,7 +38,7 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
         display: "flex",
         alignItems: "center",
         gap: 8,
-        background: colors?.button || "#00c2b9",
+        background: colors?.button || "#32c6ce",
         color: colors?.buttonText || "#fff",
         border: "none",
         borderRadius: 8,
@@ -146,7 +146,7 @@ export default function Widget() {
     "Share your cart with a friend and you both get 15% off your orders"
   );
   const [colors, setColors] = useState({
-    button: "#00c2b9",
+    button: "#32c6ce",
     background: "#FBFBFB",
     buttonText: "#fff",
     text: "#212121",
@@ -194,7 +194,7 @@ export default function Widget() {
           setButtonStyle(data.widget.buttonStyle || "text_logo_custom");
           setText(data.widget.text || "");
           setColors({
-            button: data.widget.colors?.button || "#00c2b9",
+            button: data.widget.colors?.button || "#32c6ce",
             background: data.widget.colors?.background || "#FBFBFB",
             buttonText: data.widget.colors?.buttonText || "#fff",
             text: data.widget.colors?.text || "#212121",
