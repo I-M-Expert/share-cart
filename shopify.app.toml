@@ -3,7 +3,7 @@
 client_id = "a35c5d3a0e7a762439e551459084526e"
 name = "Share Cart"
 handle = "share-cart-11"
-application_url = "https://connector-truth-sake-quarter.trycloudflare.com"
+application_url = "https://share-cart.onrender.com"
 embedded = true
 
 [build]
@@ -19,13 +19,13 @@ scopes = "read_all_cart_transforms,read_all_checkout_completion_target_customiza
 
 [auth]
 redirect_urls = [
-  "https://connector-truth-sake-quarter.trycloudflare.com/auth/callback",
-  "https://connector-truth-sake-quarter.trycloudflare.com/auth/shopify/callback",
-  "https://connector-truth-sake-quarter.trycloudflare.com/api/auth/callback"
+  "https://share-cart.onrender.com/auth/callback",
+  "https://share-cart.onrender.com/auth/shopify/callback",
+  "https://share-cart.onrender.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://connector-truth-sake-quarter.trycloudflare.com/tools/share-cart"
+url = "https://share-cart.onrender.com/tools/share-cart"
 subpath = "share-cart"
 prefix = "tools"
 include_host = true
