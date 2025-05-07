@@ -207,6 +207,9 @@
 <script>
   // Show popup on add to cart
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all share links on page load
+    setShareLinks();
+    
     var popup = document.getElementById('share-cart-popup');
     if (!popup) return;
 
@@ -216,6 +219,7 @@
       addToCartBtn.addEventListener('click', function(e) {
         setTimeout(function() {
           popup.style.display = 'flex';
+          setShareLinks(); // Update links when showing popup
         }, 500); // delay to allow cart logic
       });
     }
@@ -226,16 +230,14 @@
       checkoutBtn.addEventListener('click', function(e) {
         setTimeout(function() {
           popup.style.display = 'flex';
+          setShareLinks(); // Update links when showing popup
         }, 500);
       });
     }
-
   });
 </script>
 
 <script>
- 
-document.addEventListener('DOMContentLoaded', function() {
   function updateShareLinks() {
     return fetch('/cart.js')
       .then(res => res.json())
@@ -247,17 +249,46 @@ document.addEventListener('DOMContentLoaded', function() {
           })
         };
         var encoded = btoa(JSON.stringify(cartData));
+        
+        // Get discount code and log it for debugging
         var discount = "{{ widget_settings.coupon.code | url_encode }}";
+        console.log('Discount code:', discount);
+        console.log('Widget Settings:', {{ widget_settings | json }});
+        
         var shopDomain = "{{ shop.domain }}";
-        var shareCartLink = "https://" + shopDomain + "/tools/share-cart?cart=" + encoded + (discount ? "&discount=" + discount : "");
+        
+        // Make sure discount is always appended, even if empty
+        var shareCartLink = "https://" + shopDomain + "/tools/share-cart?cart=" + encoded;
+        
+        // Always add the discount parameter with a non-empty value
+        if (discount && discount.trim() !== '') {
+          shareCartLink += "&discount=" + discount;
+          console.log("Adding discount to URL:", discount);
+        } else {
+          console.log("No discount code available");
+          // If you need to force a discount code when none exists:
+          // shareCartLink += "&discount=SHARECART";
+        }
+        
+        console.log('Final shareCartLink:', shareCartLink);
 
         var rawMessage = `{{ widget_settings.coupon.customMessage | replace: "'", "\\'" | strip_newlines }}`;
+        console.log('Raw message:', rawMessage);
+        
         var storeName = "{{ shop.name | escape }}";
         var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue }}%{% endif %}`;
+        
+        // Use a fallback message if rawMessage is empty
+        if (!rawMessage || rawMessage.trim() === '') {
+          rawMessage = "Check out my cart at [Insert Store Name]! Use code: [Insert Discount] off at [Insert Link]";
+        }
+        
         var message = rawMessage
           .replace('[Insert Store Name]', storeName)
           .replace('[Insert Discount]', discountText)
           .replace('[Insert Link]', shareCartLink);
+        
+        console.log('Final message:', message);
 
         return {
           whatsapp: "https://wa.me/?text=" + encodeURIComponent(message),
@@ -267,26 +298,27 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // Update share links on page load and when popup is shown
   function setShareLinks() {
-    updateShareLinks().then(function(shareLinks) {
+    updateShareLinks().then(links => {
+      const emailLinks = document.querySelectorAll('.share-email-link');
+      const whatsappLinks = document.querySelectorAll('.share-whatsapp-link');
+      const messengerLinks = document.querySelectorAll('.share-messenger-link');
       
-      document.querySelectorAll('a[data-share]').forEach(function(link) {
-        console.log('link', link)
-        if (link.dataset.share === "whatsapp") {
-          console.log('whatsapp', shareLinks.whatsapp)
-          link.href = shareLinks.whatsapp;
-        } else if (link.dataset.share === "messenger") {
-          link.href = shareLinks.messenger;
-        } else if (link.dataset.share === "email") {
-          link.href = shareLinks.email;
-        }
+      emailLinks.forEach(link => link.href = links.email);
+      whatsappLinks.forEach(link => {
+        link.href = links.whatsapp; 
+        console.log('whatsapp link set to:', links.whatsapp);
       });
+      messengerLinks.forEach(link => link.href = links.messenger);
+    }).catch(error => {
+      console.error("Error updating share links:", error);
     });
   }
 
-  setShareLinks();
-});
+  // Call setShareLinks immediately when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    setShareLinks();
+  });
 </script>
 
 {% schema %}

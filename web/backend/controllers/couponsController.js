@@ -291,6 +291,18 @@ export const createCoupon = async (req, res) => {
     }
     // --- End Shopify Discount creation ---
 
+    // If the new coupon is active, update the widget
+    if (newCoupon.isActive) {
+      await Widget.findOneAndUpdate(
+        { shop },
+        { coupon: newCoupon._id },
+        { new: true }
+      );
+      
+      // Update Shopify metafields
+      await updateWidgetMetafields(shop, session);
+    }
+
     return res.status(201).json({
       success: true,
       message: "Coupon created successfully",
@@ -403,6 +415,18 @@ export const editCoupon = async (req, res) => {
     if (isActive !== undefined) coupon.isActive = isActive;
 
     await coupon.save();
+
+    // If coupon is set to active, update the widget
+    if (coupon.isActive) {
+      await Widget.findOneAndUpdate(
+        { shop },
+        { coupon: coupon._id },
+        { new: true }
+      );
+      
+      // Update Shopify metafields
+      await updateWidgetMetafields(shop, session);
+    }
 
     if (coupon.shopifyDiscountId) {
       try {
@@ -672,6 +696,9 @@ export const activateCoupon = async (req, res) => {
         { coupon: updated._id },
         { new: true }
       );
+      
+      // Update Shopify metafields
+      await updateWidgetMetafields(shop, session);
     }
 
     // Optionally activate in Shopify (usually not needed, code is active by default)
@@ -711,6 +738,79 @@ export const activateCoupon = async (req, res) => {
         message: "An error occurred while activating coupon",
         error: error.message,
       });
+  }
+};
+
+// Function to update Shopify metafields after widget update
+const updateWidgetMetafields = async (shop, session) => {
+  try {
+    const client = new shopify.api.clients.Graphql({ session });
+    const shopResponse = await client.request(`
+      query {
+        shop {
+          id
+        }
+      }
+    `);
+
+    if (!shopResponse?.data?.shop?.id) {
+      throw new Error("Failed to get shop ID");
+    }
+
+    const shopGid = shopResponse.data.shop.id;
+    
+    // Get updated widget with populated coupon
+    const widget = await Widget.findOne({ shop }).populate('coupon').lean();
+    if (!widget) return;
+
+    const setMetaFields = new shopify.api.clients.Graphql({ session });
+    const mutation = `
+      mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            key
+            namespace
+            value
+            createdAt
+            updatedAt
+          }
+          userErrors {
+            field
+            message
+            code
+          }
+        }
+      }
+    `;
+    
+    const variables = {
+      metafields: [
+        {
+          key: "widget_settings",
+          namespace: "share_cart",
+          ownerId: shopGid,
+          type: "json",
+          value: JSON.stringify({
+            display: widget.display,
+            button_style: widget.buttonStyle,
+            text: widget.text,
+            colors: widget.colors,
+            coupon: widget.coupon,
+          }),
+        },
+      ],
+    };
+
+    await setMetaFields.query({
+      data: {
+        query: mutation,
+        variables,
+      },
+    });
+    
+  } catch (error) {
+    // Log error but don't block execution
+    console.error("Failed to update widget metafields:", error);
   }
 };
 

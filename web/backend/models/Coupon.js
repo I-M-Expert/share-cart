@@ -52,7 +52,7 @@ const couponSchema = mongoose.Schema({
   // Validity
   startDate: { type: Date, default: Date.now },
   endDate: { type: Date },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: false }
 }, { timestamps: true });
 
 export default mongoose.model("Coupon", couponSchema);
