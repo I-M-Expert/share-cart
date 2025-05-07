@@ -120,6 +120,32 @@ export const createCoupon = async (req, res) => {
       });
     }
 
+    // Validate percentageValue if discountType is percentage
+    if (discountType === "percentage") {
+      let percent = Number(percentageValue);
+      // If value is > 1, assume it's a whole number and convert to decimal
+      if (percent > 1) percent = percent / 100;
+
+      // If you have recipientPercentageValue, validate their sum
+      // let recipientPercent = Number(recipientPercentageValue || 0);
+      // if (recipientPercent > 1) recipientPercent = recipientPercent / 100;
+      // if (percent + recipientPercent > 1) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Combined percentage value for sender and recipient must not exceed 1.0 (100%)",
+      //   });
+      // }
+
+      if (percent <= 0.0 || percent > 1.0) {
+        return res.status(400).json({
+          success: false,
+          message: "Percentage value must be between 0.0 and 1.0 (0% - 100%)",
+        });
+      }
+      // Use the normalized percent value for Shopify
+      req.body.percentageValue = percent;
+    }
+
     const newCoupon = new Coupon({
       shop,
       name,
@@ -158,11 +184,11 @@ export const createCoupon = async (req, res) => {
       let customerGets;
       if (discountType === "percentage") {
         customerGets = {
-          value: { percentage: Number(percentageValue) },
+          value: { percentage: Number(req.body.percentageValue) }, // Already normalized
           items: {
             all: false,
-            ...(productIds.length ? { products: { productReferences: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { collectionReferences: collectionIds } } : {}),
+            ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+            ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
           },
         };
       } else if (discountType === "fixed") {
@@ -170,8 +196,8 @@ export const createCoupon = async (req, res) => {
           value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
           items: {
             all: false,
-            ...(productIds.length ? { products: { productReferences: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { collectionReferences: collectionIds } } : {}),
+            ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+            ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
           },
         };
       }
@@ -388,8 +414,8 @@ export const editCoupon = async (req, res) => {
             value: { percentage: Number(percentageValue) },
             items: {
               all: false,
-              ...(productIds.length ? { products: { productReferences: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { collectionReferences: collectionIds } } : {}),
+              ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+              ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
             },
           };
         } else if (discountType === "fixed") {
@@ -397,8 +423,8 @@ export const editCoupon = async (req, res) => {
             value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
             items: {
               all: false,
-              ...(productIds.length ? { products: { productReferences: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { collectionReferences: collectionIds } } : {}),
+              ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+              ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
             },
           };
         }
