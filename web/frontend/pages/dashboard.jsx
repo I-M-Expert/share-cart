@@ -70,7 +70,7 @@ export default function Dashboard() {
   // Fetch analytics when timeframe changes
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/analytics/dashboard?timeframe=${filter}`)
+    fetch(`/analytics/dashboard?timeframe=${filter}`)
       .then(res => res.json())
       .then(response => {
         if (response.success) {
