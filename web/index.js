@@ -43,6 +43,8 @@ app.use(
   })
 );
 
+app.use("/analytics", shopify.validateAuthenticatedSession(), analyticsRoutes);
+
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
@@ -116,7 +118,7 @@ app.use(
   collectionRoutes
 );
 app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
-app.use('/analytics', shopify.validateAuthenticatedSession(), analyticsRoutes);
+
 
 // --- Proxy endpoint for Shopify App Proxy: /tools/share-cart ---
 app.use("/tools/share-cart", async (req, res) => {
