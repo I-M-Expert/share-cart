@@ -323,22 +323,18 @@
   function applyDiscountToCurrentCart() {
     var discount = "{{ widget_settings.coupon.code }}";
     if (discount && discount.trim() !== '') {
-      console.log("Attempting to apply discount to sender's cart:", discount);
+      console.log("Applying discount to sender's cart:", discount);
       
-      // Redirect to apply discount code with return to cart
-      window.location.href = '/discount/' + discount + '?redirect=/cart';
-      
-      // Alternative AJAX method if you prefer not to redirect
-      /*
+      // Use fetch instead of redirect
       fetch('/discount/' + discount, {
         method: 'GET',
         credentials: 'same-origin'
       }).then(function() {
         console.log('Discount applied to sender cart');
-        // Refresh cart to show updated prices
-        window.location.reload();
+        // No redirection or reload needed
+      }).catch(function(error) {
+        console.error('Error applying discount:', error);
       });
-      */
     }
   }
 
@@ -373,6 +369,9 @@
           })
         }).catch(err => console.error('Failed to record share analytics:', err));
       });
+      
+    // Return true to allow the default link click behavior
+    return true;
   }
 
   // Update your share link event handlers
