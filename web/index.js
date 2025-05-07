@@ -43,7 +43,7 @@ app.use(
   })
 );
 
-app.use("/analytics", shopify.validateAuthenticatedSession(), analyticsRoutes);
+app.use("/analytics", analyticsRoutes);
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
