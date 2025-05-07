@@ -264,20 +264,17 @@
             .replace('[Insert Link]', shareCartLink);
 
           // WhatsApp
-          var whatsappBtn = document.querySelector('a[data-share="whatsapp"]');
-          if (whatsappBtn) {
+          document.querySelectorAll('a[data-share="whatsapp"]').forEach(function(whatsappBtn) {
             whatsappBtn.href = "https://wa.me/?text=" + encodeURIComponent(message);
-          }
+          });
           // Messenger
-          var messengerBtn = document.querySelector('a[data-share="messenger"]');
-          if (messengerBtn) {
+          document.querySelectorAll('a[data-share="messenger"]').forEach(function(messengerBtn) {
             messengerBtn.href = "https://m.me/?link=" + encodeURIComponent(shareCartLink);
-          }
+          });
           // Email
-          var emailBtn = document.querySelector('a[data-share="email"]');
-          if (emailBtn) {
+          document.querySelectorAll('a[data-share="email"]').forEach(function(emailBtn) {
             emailBtn.href = "mailto:?subject=" + encodeURIComponent("Check out my cart!") + "&body=" + encodeURIComponent(message);
-          }
+          });
         });
     }
 
@@ -288,6 +285,49 @@
     }
     document.querySelectorAll('a[data-share]').forEach(function(link) {
       link.addEventListener('click', updateShareLinks);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    function updateShareLinksAndOpen(e) {
+      e.preventDefault();
+      fetch('/cart.js')
+        .then(res => res.json())
+        .then(cart => {
+          var cartData = {
+            items: cart.items.map(function(item) {
+              return { id: item.id, quantity: item.quantity };
+            })
+          };
+          var encoded = btoa(JSON.stringify(cartData));
+          var discount = "{{ widget_settings.coupon.code | url_encode }}";
+          var shopDomain = "{{ shop.domain }}";
+          var shareCartLink = "https://" + shopDomain + "/tools/share-cart?cart=" + encoded + (discount ? "&discount=" + discount : "");
+
+          var rawMessage = `{{ widget_settings.coupon.customMessage | replace: "'", "\\'" | strip_newlines }}`;
+          var storeName = "{{ shop.name | escape }}";
+          var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue }}%{% endif %}`;
+          var message = rawMessage
+            .replace('[Insert Store Name]', storeName)
+            .replace('[Insert Discount]', discountText)
+            .replace('[Insert Link]', shareCartLink);
+
+          var target = e.currentTarget;
+          var type = target.getAttribute('data-share');
+          var url = "#";
+          if (type === "whatsapp") {
+            url = "https://wa.me/?text=" + encodeURIComponent(message);
+          } else if (type === "messenger") {
+            url = "https://m.me/?link=" + encodeURIComponent(shareCartLink);
+          } else if (type === "email") {
+            url = "mailto:?subject=" + encodeURIComponent("Check out my cart!") + "&body=" + encodeURIComponent(message);
+          }
+          window.open(url, '_blank');
+        });
+    }
+
+    document.querySelectorAll('a[data-share]').forEach(function(link) {
+      link.addEventListener('click', updateShareLinksAndOpen);
     });
   });
 </script>
