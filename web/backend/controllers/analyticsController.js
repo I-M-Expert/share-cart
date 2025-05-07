@@ -5,14 +5,12 @@ import Coupon from '../models/Coupon.js';
 export const recordShareEvent = async (req, res) => {
   try {
     const { platform, couponCode, cartValue, customerId } = req.body;
+    const shop = req.query.shop || req.body.shop;
     
-    // Get shop from session for security
-    const session = res.locals.shopify?.session;
-    if (!session) {
-      return res.status(401).json({ success: false, message: 'Unauthorized - Missing Session' });
+    if (!shop) {
+      return res.status(400).json({ success: false, message: 'Shop identifier required' });
     }
-    const shop = req.query.shop || session.shop;
-    
+
     // Find coupon by code to get the ID
     let couponId = null;
     if (couponCode) {
@@ -51,13 +49,11 @@ export const recordShareEvent = async (req, res) => {
 export const recordCouponUsage = async (req, res) => {
   try {
     const { couponCode, userType, orderValue, discountAmount, customerId, customerName } = req.body;
+    const shop = req.query.shop || req.body.shop;
     
-    // Get shop from session for security
-    const session = res.locals.shopify?.session;
-    if (!session) {
-      return res.status(401).json({ success: false, message: 'Unauthorized - Missing Session' });
+    if (!shop) {
+      return res.status(400).json({ success: false, message: 'Shop identifier required' });
     }
-    const shop = req.query.shop || session.shop;
 
     let couponId = null;
     if (couponCode) {
@@ -104,13 +100,7 @@ export const recordCouponUsage = async (req, res) => {
 // Get analytics data for dashboard
 export const getDashboardAnalytics = async (req, res) => {
   try {
-    // Get shop from session for security
-    const session = res.locals.shopify?.session;
-    if (!session) {
-      return res.status(401).json({ success: false, message: 'Unauthorized - Missing Session' });
-    }
-    const shop = req.query.shop || session.shop;
-    
+    const shop = req.query.shop;
     const timeframe = req.query.timeframe || '7d';
     
     if (!shop) {
