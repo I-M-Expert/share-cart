@@ -8,11 +8,14 @@ import crypto from "crypto";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import PrivacyWebhookHandlers from "./privacy.js";
+import OrderWebhookHandlers from "./orders-webhooks.js"; // Add this line
 import billingRoutes from "./backend/routes/billingRoutes.js";
 import couponRoutes from "./backend/routes/couponRoutes.js";
 import productRoutes from "./backend/routes/productRoutes.js";
 import collectionRoutes from "./backend/routes/collectionRoutes.js";
 import widgetRoutes from "./backend/routes/widgetRoutes.js";
+import analyticsRoutes from './backend/routes/analyticsRoutes.js';
+import { registerWebhooks } from "./helpers/webhookRegistration.js";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -31,11 +34,24 @@ app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
   shopify.config.auth.callbackPath,
   shopify.auth.callback(),
+  async (req, res, next) => {
+    const session = res.locals.shopify.session;
+    await registerWebhooks(session, shopify);
+    next();
+  },
   shopify.redirectToShopifyOrAppRoot()
 );
+
+// Merge webhook handlers
+const webhookHandlers = {
+  ...PrivacyWebhookHandlers,
+  ...OrderWebhookHandlers
+};
+
+// Then update your webhook processing:
 app.post(
   shopify.config.webhooks.path,
-  shopify.processWebhooks({ webhookHandlers: PrivacyWebhookHandlers })
+  shopify.processWebhooks({ webhookHandlers })
 );
 
 // If you are adding routes outside of the /api path, remember to
@@ -86,6 +102,7 @@ app.use(
   collectionRoutes
 );
 app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
+app.use('/api/analytics', shopify.validateAuthenticatedSession(), analyticsRoutes);
 
 // --- Proxy endpoint for Shopify App Proxy: /tools/share-cart ---
 app.use("/tools/share-cart", async (req, res) => {

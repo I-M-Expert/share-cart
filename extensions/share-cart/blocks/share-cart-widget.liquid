@@ -319,6 +319,80 @@
   document.addEventListener('DOMContentLoaded', function() {
     setShareLinks();
   });
+
+  function applyDiscountToCurrentCart() {
+    var discount = "{{ widget_settings.coupon.code }}";
+    if (discount && discount.trim() !== '') {
+      console.log("Attempting to apply discount to sender's cart:", discount);
+      
+      // Redirect to apply discount code with return to cart
+      window.location.href = '/discount/' + discount + '?redirect=/cart';
+      
+      // Alternative AJAX method if you prefer not to redirect
+      /*
+      fetch('/discount/' + discount, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(function() {
+        console.log('Discount applied to sender cart');
+        // Refresh cart to show updated prices
+        window.location.reload();
+      });
+      */
+    }
+  }
+
+  // Update your handleShareButtonClick function
+  function handleShareButtonClick(platform) {
+    // Track that sharing happened
+    console.log('Shared via ' + platform);
+    
+    // Apply discount to sender's cart
+    applyDiscountToCurrentCart();
+    
+    // Send analytics to backend
+    const discount = "{{ widget_settings.coupon.code }}";
+    
+    // Get cart total - needs Shopify's cart object
+    fetch('/cart.js')
+      .then(res => res.json())
+      .then(cart => {
+        const cartValue = cart.total_price / 100; // Convert cents to dollars
+        
+        // Send share event to backend
+        fetch('/api/analytics/share', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            platform: platform,
+            couponCode: discount,
+            cartValue: cartValue,
+            shop: "{{ shop.domain }}"
+          })
+        }).catch(err => console.error('Failed to record share analytics:', err));
+      });
+  }
+
+  // Update your share link event handlers
+  document.querySelectorAll('.share-whatsapp-link').forEach(link => {
+    link.addEventListener('click', function() {
+      handleShareButtonClick('whatsapp');
+    });
+  });
+
+  document.querySelectorAll('.share-messenger-link').forEach(link => {
+    link.addEventListener('click', function() {
+      handleShareButtonClick('messenger');
+    });
+  });
+
+  document.querySelectorAll('.share-email-link').forEach(link => {
+    link.addEventListener('click', function() {
+      handleShareButtonClick('email');
+    });
+  });
 </script>
 
 {% schema %}

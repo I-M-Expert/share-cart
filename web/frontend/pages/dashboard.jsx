@@ -18,7 +18,7 @@ import {
 import BrushIcon from "../components/svgs/BrushIcon";
 import { useNavigate } from "react-router-dom";
 import CouponIcon from "../components/svgs/CouponIcon";
-
+import { useAuthenticatedFetch } from "../hooks";
 
 ChartJS.register(
   CategoryScale,
@@ -31,54 +31,6 @@ ChartJS.register(
   Legend,
   Title
 );
-
-// Example data for charts
-const lineData = {
-  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  datasets: [
-    {
-      label: "Shares",
-      data: [12, 19, 10, 17, 14, 20, 16],
-      borderColor: "#51c9c0",
-      backgroundColor: "rgba(81,201,192,0.1)",
-      tension: 0.4,
-    },
-    {
-      label: "Purchases",
-      data: [8, 11, 7, 10, 9, 13, 11],
-      borderColor: "#FBB105",
-      backgroundColor: "rgba(251,177,5,0.1)",
-      tension: 0.4,
-    },
-  ],
-};
-
-const barData = {
-  labels: ["Email", "WhatsApp", "Messenger"],
-  datasets: [
-    {
-      label: "Shares",
-      data: [30, 20, 25, 15, 10],
-      backgroundColor: [
-        "#51c9c0",
-        "#FBB105",
-        "#34A853",
-        "#1877F2",
-        "#8884d8",
-      ],
-    },
-  ],
-};
-
-const pieData = {
-  labels: ["Sender", "Recipient"],
-  datasets: [
-    {
-      data: [1400, 940],
-      backgroundColor: ["#51c9c0", "#FBB105"],
-    },
-  ],
-};
 
 const filterOptions = [
   { label: "Last 7 days", value: "7d" },
@@ -100,15 +52,88 @@ function useIsMobile(breakpoint = 600) {
 
 export default function Dashboard() {
   const [filter, setFilter] = useState("7d");
-
-  const navigate = useNavigate()
-
-  // Example values (replace with real data)
-  const shares = 120;
-  const couponsUsed = 45;
-  const revenue = "$2,340";
-
+  const [analyticsData, setAnalyticsData] = useState({
+    shares: 0,
+    couponsUsed: 0,
+    revenue: "$0",
+    sharesByPlatform: { whatsapp: 0, messenger: 0, email: 0 },
+    revenueByUserType: { sender: 0, recipient: 0 },
+    dailyShares: [],
+    dailyPurchases: []
+  });
+  const [loading, setLoading] = useState(true);
+  
+  const fetch = useAuthenticatedFetch();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Fetch analytics when timeframe changes
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/analytics/dashboard?timeframe=${filter}`)
+      .then(res => res.json())
+      .then(response => {
+        if (response.success) {
+          setAnalyticsData(response.data);
+        } else {
+          console.error("Failed to fetch analytics:", response.message);
+        }
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching analytics:", error);
+        setLoading(false);
+      });
+  }, [filter]);
+
+  // Prepare chart data from actual analytics
+  const lineData = {
+    labels: analyticsData.dailyShares.map(item => new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })),
+    datasets: [
+      {
+        label: "Shares",
+        data: analyticsData.dailyShares.map(item => item.count),
+        borderColor: "#51c9c0",
+        backgroundColor: "rgba(81,201,192,0.1)",
+        tension: 0.4,
+      },
+      {
+        label: "Purchases",
+        data: analyticsData.dailyPurchases.map(item => item.count),
+        borderColor: "#FBB105",
+        backgroundColor: "rgba(251,177,5,0.1)",
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const barData = {
+    labels: ["Email", "WhatsApp", "Messenger"],
+    datasets: [
+      {
+        label: "Shares",
+        data: [
+          analyticsData.sharesByPlatform.email, 
+          analyticsData.sharesByPlatform.whatsapp, 
+          analyticsData.sharesByPlatform.messenger
+        ],
+        backgroundColor: ["#51c9c0", "#FBB105", "#34A853"],
+      },
+    ],
+  };
+
+  const pieData = {
+    labels: ["Sender", "Recipient"],
+    datasets: [
+      {
+        data: [
+          analyticsData.revenueByUserType.sender, 
+          analyticsData.revenueByUserType.recipient
+        ],
+        backgroundColor: ["#51c9c0", "#FBB105"],
+      },
+    ],
+  };
 
   useEffect(() => {
       
@@ -165,19 +190,19 @@ export default function Dashboard() {
                 <div style={{ flex: 1 }}>
                   <Card sectioned>
                     <p className="fw400 fs18 mb-3">Shares</p>
-                    <p className="fw900 fs30">{shares}</p>
+                    <p className="fw900 fs30">{analyticsData.shares}</p>
                   </Card>
                 </div>
                 <div style={{ flex: 1 }}>
                   <Card sectioned>
                     <p className="fw400 fs18 mb-3">Coupons Used</p>
-                    <p className="fw900 fs30">{couponsUsed}</p>
+                    <p className="fw900 fs30">{analyticsData.couponsUsed}</p>
                   </Card>
                 </div>
                 <div style={{ flex: 1 }}>
                   <Card sectioned>
                     <p className="fw400 fs18 mb-3">Revenue</p>
-                    <p className="fw900 fs30">{revenue}</p>
+                    <p className="fw900 fs30">{analyticsData.revenue}</p>
                   </Card>
                 </div>
               </div>
