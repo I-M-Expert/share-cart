@@ -53,12 +53,8 @@ export const recordCouponUsage = async (req, res) => {
   try {
     const { couponCode, userType, orderValue, discountAmount, customerId, customerName } = req.body;
     
-    // Get shop from session for security
-    const session = res.locals.shopify?.session;
-    if (!session) {
-      return res.status(401).json({ success: false, message: 'Unauthorized - Missing Session' });
-    }
-    const shop = req.query.shop || session.shop;
+    
+    const shop = req.query.shop || req.body.shop;
 
     let couponId = null;
     if (couponCode) {
