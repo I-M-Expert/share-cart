@@ -222,7 +222,6 @@ export const createCoupon = async (req, res) => {
           customerGets,
           customerSelection: { all: true },
           appliesOncePerCustomer: true,
-          usageLimit: 1,
           ...(minimumRequirement ? { minimumRequirement } : {}),
         },
       };
@@ -493,7 +492,6 @@ export const editCoupon = async (req, res) => {
             customerGets,
             customerSelection: { all: true },
             appliesOncePerCustomer: true,
-            usageLimit: 1,
             ...(minimumRequirement ? { minimumRequirement } : {}),
           },
         };
