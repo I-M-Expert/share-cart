@@ -126,7 +126,7 @@ export const createCoupon = async (req, res) => {
       // If value is > 1, assume it's a whole number and convert to decimal
       if (percent > 1) percent = percent / 100;
 
-      If you have recipientPercentageValue, validate their sum
+      // If you have recipientPercentageValue, validate their sum
       let recipientPercent = Number(recipientPercentageValue || 0);
       if (recipientPercent > 1) recipientPercent = recipientPercent / 100;
       if (percent + recipientPercent > 1) {
