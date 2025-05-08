@@ -19,8 +19,11 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
           code: discountCode.code.toUpperCase() 
         });
         
+        console.log("Received order webhook:", order.id, order.discount_codes);
+
         if (coupon) {
           console.log(`Found matching coupon in our database: ${coupon.code}`);
+          console.log("Matched coupon:", coupon.code, "for shop:", shop);
           
           // Get customer email for better tracking
           const customerEmail = order.customer ? order.customer.email : null;
@@ -28,6 +31,8 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
           // First, calculate the values
           const orderValue = parseFloat(order.total_price) / 100;
           const discountAmount = parseFloat(order.total_discounts) / 100;
+
+          console.log("Order value:", orderValue, "Discount amount:", discountAmount);
 
           // Then determine user type and update the share record
           let userType = 'unknown';
@@ -80,6 +85,8 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
                          'Guest',
             timestamp: new Date() // Make sure timestamp is explicitly set
           });
+
+          console.log("CouponUsage created for order:", order.id);
           
           // Update coupon usage statistics including revenue information
           await Coupon.findByIdAndUpdate(coupon._id, {
@@ -99,7 +106,7 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
           
           console.log(`Successfully recorded coupon usage with revenue: $${orderValue}`);
         } else {
-          console.log(`No matching coupon found for code: ${discountCode.code}`);
+          console.warn("No matching coupon found for code:", discountCode.code, "in shop:", shop);
         }
       }
     }

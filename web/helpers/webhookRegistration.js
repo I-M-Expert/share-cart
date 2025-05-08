@@ -1,3 +1,4 @@
+import shopify from '../shopify.js';
 export async function registerWebhooks(session, shopify) {
   try {
     const webhooks = [
