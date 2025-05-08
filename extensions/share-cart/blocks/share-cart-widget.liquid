@@ -78,9 +78,9 @@
   <!-- Product Page Widget (below Buy It Now button) -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Try to find the Buy It Now button
-      var buyNowBtn = document.querySelector('button[name="checkout"], button[name="buy-it-now"], [data-buy-it-now-button]');
-      if (buyNowBtn) {
+      // Find the Shopify payment button container
+      var paymentButtonDiv = document.querySelector('div[data-shopify="payment-button"]');
+      if (paymentButtonDiv) {
         var widgetHtml = `<div id="share-cart-product-widget" style="
           background: {{ widget_settings.colors.background }};
           border-radius: 12px;
@@ -131,8 +131,8 @@
         var tempDiv = document.createElement('div');
         tempDiv.innerHTML = widgetHtml;
 
-        // Insert after the Buy It Now button
-        buyNowBtn.parentNode.insertBefore(tempDiv.firstChild, buyNowBtn.nextSibling);
+        // Insert after the payment button container
+        paymentButtonDiv.parentNode.insertBefore(tempDiv.firstChild, paymentButtonDiv.nextSibling);
       }
     });
   </script>
