@@ -1,5 +1,6 @@
 import { CouponUsage } from '../models/Analytics.js';
 import Coupon from '../models/Coupon.js';
+import Share from '../models/Share.js'; // Add this import
 
 export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
   try {
@@ -21,42 +22,70 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
         if (coupon) {
           console.log(`Found matching coupon in our database: ${coupon.code}`);
           
-          // Determine if this is a sender or recipient
-          const userType = order.customer && 
-                          order.customer.orders_count <= 1 ? 
-                          'recipient' : 'sender';
+          // Get customer email for better tracking
+          const customerEmail = order.customer ? order.customer.email : null;
           
-          console.log(`Recording usage for ${userType} with order value: ${order.total_price/100}`);
+          // Determine if sender or recipient based on Share records rather than order count
+          let userType = 'unknown';
           
-          // Record the coupon usage
+          if (customerEmail) {
+            const shareRecord = await Share.findOne({
+              couponCode: coupon.code,
+              $or: [
+                { senderEmail: customerEmail },
+                { recipientEmail: customerEmail }
+              ]
+            });
+            
+            if (shareRecord) {
+              userType = shareRecord.senderEmail === customerEmail ? 'sender' : 'recipient';
+            } else {
+              // Fallback to the existing logic based on order count
+              userType = order.customer && order.customer.orders_count <= 1 ? 'recipient' : 'sender';
+            }
+          } else {
+            // Fallback if no email is available
+            userType = order.customer && order.customer.orders_count <= 1 ? 'recipient' : 'sender';
+          }
+          
+          // Make sure we're getting the correct order value - Shopify sends amounts in cents
+          const orderValue = parseFloat(order.total_price) / 100;
+          const discountAmount = parseFloat(order.total_discounts) / 100;
+          
+          console.log(`Recording usage for ${userType} with order value: ${orderValue}`);
+          
+          // Record the coupon usage with revenue data
           await CouponUsage.create({
             shop,
             couponId: coupon._id,
             couponCode: coupon.code,
             userType,
-            orderValue: order.total_price / 100, // Convert cents to dollars
-            discountAmount: order.total_discounts / 100,
+            orderValue: orderValue,
+            discountAmount: discountAmount,
             customerId: order.customer ? order.customer.id : null,
             customerName: order.customer ? 
                          `${order.customer.first_name} ${order.customer.last_name}`.trim() : 
-                         'Guest'
+                         'Guest',
+            timestamp: new Date() // Make sure timestamp is explicitly set
           });
           
-          // Update coupon usage statistics
+          // Update coupon usage statistics including revenue information
           await Coupon.findByIdAndUpdate(coupon._id, {
-            $inc: { convertedCount: 1 },
+            $inc: { convertedCount: 1, totalRevenue: orderValue },
             $push: { 
               usedBy: {
                 customerId: order.customer ? order.customer.id : null,
+                customerEmail: customerEmail,
                 customerName: order.customer ? 
                             `${order.customer.first_name} ${order.customer.last_name}`.trim() : 
                             'Guest',
+                orderValue: orderValue,
                 usedAt: new Date()
               }
             }
           });
           
-          console.log(`Successfully recorded coupon usage for ${coupon.code}`);
+          console.log(`Successfully recorded coupon usage with revenue: $${orderValue}`);
         } else {
           console.log(`No matching coupon found for code: ${discountCode.code}`);
         }

@@ -192,7 +192,7 @@ export const getDashboardAnalytics = async (req, res) => {
         $match: { 
           shop, 
           timestamp: { $gte: startDate, $lte: endDate },
-          orderValue: { $exists: true, $ne: null }
+          orderValue: { $exists: true, $ne: null, $gt: 0 }
         }
       },
       {
@@ -210,8 +210,8 @@ export const getDashboardAnalytics = async (req, res) => {
     };
     
     revenueData.forEach(item => {
-      if (item._id) {
-        revenueByUserType[item._id] = item.totalRevenue;
+      if (item._id && (item._id === 'sender' || item._id === 'recipient')) {
+        revenueByUserType[item._id] = parseFloat(item.totalRevenue.toFixed(2));
       }
     });
     
@@ -256,7 +256,7 @@ export const getDashboardAnalytics = async (req, res) => {
       data: {
         shares: totalShares,
         couponsUsed,
-        revenue: totalRevenue.toFixed(2),
+        revenue: `$${totalRevenue.toFixed(2)}`,
         revenueByUserType,
         sharesByPlatform: platformData,
         dailyShares,
