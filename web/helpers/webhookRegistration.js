@@ -38,12 +38,13 @@ export async function registerWebhooks(session, shopify) {
 
     if (response.body.data.webhookSubscriptionCreate.userErrors.length) {
       console.error('Webhook registration errors:', response.body.data.webhookSubscriptionCreate.userErrors);
-      throw new Error('Failed to register webhook');
+      // Do not throw, just log and continue
+      return;
     }
 
     console.log('Registered ORDERS_CREATE webhook:', response.body.data.webhookSubscriptionCreate.webhookSubscription);
   } catch (error) {
     console.error('Failed to register webhooks:', error);
-    throw error;
+    // Do not re-throw, just log and continue
   }
 }
