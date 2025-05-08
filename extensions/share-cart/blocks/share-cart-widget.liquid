@@ -75,10 +75,11 @@
 {% endif %}
 
 {%- if display_str contains 'product_page' and template == 'product' -%}
-  <!-- Product Page Widget (below Buy Now button) -->
+  <!-- Product Page Widget (below Buy It Now button) -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      var buyNowBtn = document.querySelector('form[action*="/cart/add"] [type="submit"], button[name="add"]');
+      // Try to find the Buy It Now button
+      var buyNowBtn = document.querySelector('button[name="checkout"], button[name="buy-it-now"], [data-buy-it-now-button]');
       if (buyNowBtn) {
         var widgetHtml = `<div id="share-cart-product-widget" style="
           background: {{ widget_settings.colors.background }};
@@ -106,6 +107,8 @@
             gap: 16px;
             justify-content: center;
             width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
           ">
             {% render 'share-cart-buttons',
               button_style: widget_settings.button_style,
@@ -124,9 +127,11 @@
             cursor: pointer;
           ">No thanks! I prefer not to get a discount</p>
         </div>`;
+
         var tempDiv = document.createElement('div');
         tempDiv.innerHTML = widgetHtml;
-        // Insert AFTER the Buy Now button (below)
+
+        // Insert after the Buy It Now button
         buyNowBtn.parentNode.insertBefore(tempDiv.firstChild, buyNowBtn.nextSibling);
       }
     });

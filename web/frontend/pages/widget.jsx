@@ -46,7 +46,13 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
         fontWeight: 600,
         cursor: "pointer",
         fontSize: 16,
-        width: '100%'
+        width: direction === "column" ? "100%" : "auto", // Only full width for column
+        minWidth: 0, // Allow shrinking
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
       }}
     >
       <Icon icon={icon} width={24} height={24} aria-label={alt} />
@@ -534,13 +540,14 @@ export default function Widget() {
                         padding: 24,
                         minHeight: 180,
                         width: "100%",
-                        maxWidth: 500, // Add a max width for better layout
+                        maxWidth: 500,
                         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                         display: "flex",
                         alignItems: "center",
                         gap: 24,
-                        justifyContent: "center", // Center content
-                        flexDirection: "column", // Stack vertically for better responsiveness
+                        justifyContent: "center",
+                        flexDirection: "column",
+                        overflow: "auto", // Prevent overflow
                       }}
                     >
                       <div style={{ width: "100%" }}>
@@ -558,10 +565,12 @@ export default function Widget() {
                           className="d-flex jcc"
                           style={{
                             display: "flex",
-                            flexWrap: "wrap", // Allow buttons to wrap
+                            flexWrap: "wrap",
                             gap: 16,
                             justifyContent: "center",
                             width: "100%",
+                            maxWidth: "100%",
+                            boxSizing: "border-box",
                           }}
                         >
                           <ShareButtons
