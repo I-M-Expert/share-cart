@@ -157,7 +157,12 @@ export const createCoupon = async (req, res) => {
         };
       } else if (discountType === "fixed") {
         customerGets = {
-          value: { discountAmount: { amount: Number(fixedAmount) } },
+          value: { 
+            discountAmount: { 
+              amount: Number(fixedAmount),
+              appliesOnEachItem: false  // Add this line - false means apply once per order
+            } 
+          },
           items: {
             all: false,
             ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
@@ -448,7 +453,12 @@ export const editCoupon = async (req, res) => {
           };
         } else if (updatedDiscountType === "fixed") {
           customerGets = {
-            value: { discountAmount: { amount: Number(updatedFixedAmount) } },
+            value: { 
+              discountAmount: { 
+                amount: Number(updatedFixedAmount),
+                appliesOnEachItem: false  // Add this line - false means apply once per order
+              } 
+            },
             items: {
               all: false,
               ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
