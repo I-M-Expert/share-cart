@@ -45,7 +45,7 @@ const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
         padding: "8px 16px",
         fontWeight: 600,
         cursor: "pointer",
-        fontSize: 12,
+        fontSize: 10,
         width: direction === "column" ? "100%" : "auto", // Only full width for column
         minWidth: 0, // Allow shrinking
         maxWidth: "100%",

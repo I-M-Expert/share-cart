@@ -75,12 +75,11 @@
 {% endif %}
 
 {%- if display_str contains 'product_page' and template == 'product' -%}
-  <!-- Product Page Widget (below Buy It Now button) -->
+  <!-- Product Page Widget (below Buy It Now button, outside the form) -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Find the Shopify payment button container
-      var paymentButtonDiv = document.querySelector('div[data-shopify="payment-button"]');
-      if (paymentButtonDiv) {
+      var productFormButtons = document.querySelector('.product-form__buttons');
+      if (productFormButtons) {
         var widgetHtml = `<div id="share-cart-product-widget" style="
           background: {{ widget_settings.colors.background }};
           border-radius: 12px;
@@ -131,8 +130,35 @@
         var tempDiv = document.createElement('div');
         tempDiv.innerHTML = widgetHtml;
 
-        // Insert after the payment button container
-        paymentButtonDiv.parentNode.insertBefore(tempDiv.firstChild, paymentButtonDiv.nextSibling);
+        // Insert after .product-form__buttons but outside the form
+        var parent = productFormButtons.parentNode;
+        if (parent.tagName === 'FORM') {
+          // Insert after the form, not inside it
+          parent.parentNode.insertBefore(tempDiv.firstChild, parent.nextSibling);
+        } else {
+          // Otherwise, just after the buttons
+          parent.insertBefore(tempDiv.firstChild, productFormButtons.nextSibling);
+        }
+
+        // ...inside your DOMContentLoaded handler, after widget is inserted...
+        // Attach share button click handlers
+        setTimeout(function() {
+          document.querySelectorAll('.share-whatsapp-link').forEach(link => {
+            link.addEventListener('click', function() {
+              handleShareButtonClick('whatsapp');
+            });
+          });
+          document.querySelectorAll('.share-messenger-link').forEach(link => {
+            link.addEventListener('click', function() {
+              handleShareButtonClick('messenger');
+            });
+          });
+          document.querySelectorAll('.share-email-link').forEach(link => {
+            link.addEventListener('click', function() {
+              handleShareButtonClick('email');
+            });
+          });
+        }, 100);
       }
     });
   </script>
