@@ -57,6 +57,7 @@ export const createCoupon = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Shop identifier not found" });
 
+    // Validate subscription limits first
     const activeCouponsCount = await Coupon.countDocuments({
       shop,
       isActive: true,
@@ -109,6 +110,7 @@ export const createCoupon = async (req, res) => {
       1000 + Math.random() * 9000
     )}`;
 
+    // Validate product/collection selection
     if (
       (!productIds || productIds.length === 0) &&
       (!collectionIds || collectionIds.length === 0)
@@ -121,20 +123,11 @@ export const createCoupon = async (req, res) => {
     }
 
     // Validate percentageValue if discountType is percentage
+    let normalizedPercentage = percentageValue;
     if (discountType === "percentage") {
       let percent = Number(percentageValue);
       // If value is > 1, assume it's a whole number and convert to decimal
       if (percent > 1) percent = percent / 100;
-
-      // If you have recipientPercentageValue, validate their sum
-      // let recipientPercent = Number(recipientPercentageValue || 0);
-      // if (recipientPercent > 1) recipientPercent = recipientPercent / 100;
-      // if (percent + recipientPercent > 1) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Combined percentage value for sender and recipient must not exceed 1.0 (100%)",
-      //   });
-      // }
 
       if (percent <= 0.0 || percent > 1.0) {
         return res.status(400).json({
@@ -143,40 +136,11 @@ export const createCoupon = async (req, res) => {
         });
       }
       // Use the normalized percent value for Shopify
-      req.body.percentageValue = percent;
+      normalizedPercentage = percent;
     }
 
-    const newCoupon = new Coupon({
-      shop,
-      name,
-      code,
-      discountType,
-      percentageValue:
-        discountType === "percentage" ? percentageValue : undefined,
-      fixedAmount: discountType === "fixed" ? fixedAmount : undefined,
-      endDate: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      productIds,
-      collectionIds,
-      senderRequireMinPurchase,
-      senderMinPurchaseAmount,
-      senderTimesPerUser,
-      senderTimesValue,
-      senderNewCustomersOnly,
-      recipientRequireMinPurchase,
-      recipientMinPurchaseAmount,
-      recipientTimesPerUser,
-      recipientTimesValue,
-      recipientNewCustomersOnly,
-      shareWhatsapp,
-      shareMessenger,
-      shareEmail,
-      productId: selectedProduct,
-      customMessage,
-    });
-
-    await newCoupon.save();
-
-    // --- Create Standard Discount in Shopify ---
+    // --- Create Standard Discount in Shopify FIRST ---
+    let shopifyDiscountId = null;
     try {
       const client = new shopify.api.clients.Graphql({ session });
 
@@ -184,7 +148,7 @@ export const createCoupon = async (req, res) => {
       let customerGets;
       if (discountType === "percentage") {
         customerGets = {
-          value: { percentage: Number(req.body.percentageValue) }, // Already normalized
+          value: { percentage: Number(normalizedPercentage) },
           items: {
             all: false,
             ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
@@ -227,39 +191,44 @@ export const createCoupon = async (req, res) => {
       };
 
       const mutation = `
-  mutation CreateDiscountCode($basicCodeDiscount: DiscountCodeBasicInput!) {
-    discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
-      codeDiscountNode {
-        id
-        codeDiscount {
-          ... on DiscountCodeBasic {
-            title
-            startsAt
-            endsAt
-            customerSelection {
-              ... on DiscountCustomers {
-                customers {
-                  id
+        mutation CreateDiscountCode($basicCodeDiscount: DiscountCodeBasicInput!) {
+          discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
+            codeDiscountNode {
+              id
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  title
+                  startsAt
+                  endsAt
+                  customerSelection {
+                    ... on DiscountCustomers {
+                      customers {
+                        id
+                      }
+                    }
+                  }
+                  customerGets {
+                    value {
+                      ... on DiscountPercentage {
+                        percentage
+                      }
+                      ... on DiscountAmount {
+                        amount {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
-            customerGets {
-              value {
-                ... on DiscountPercentage {
-                  percentage
-                }
-              }
+            userErrors {
+              field
+              message
             }
           }
-        }
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
+        }`;
 
       const data = await client.query({
         data: {
@@ -273,12 +242,11 @@ export const createCoupon = async (req, res) => {
         console.error("Shopify discount creation errors:", resp.userErrors);
         return res.status(400).json({
           success: false,
-          message: "Shopify API error",
+          message: "Failed to create Shopify Discount",
           userErrors: resp.userErrors,
         });
       } else {
-        newCoupon.shopifyDiscountId = resp.codeDiscountNode.id;
-        await newCoupon.save();
+        shopifyDiscountId = resp.codeDiscountNode.id;
       }
     } catch (e) {
       console.error("Failed to create Shopify Discount:", e);
@@ -289,6 +257,37 @@ export const createCoupon = async (req, res) => {
       });
     }
     // --- End Shopify Discount creation ---
+
+    // After successful Shopify discount creation, create the coupon in our database
+    const newCoupon = new Coupon({
+      shop,
+      name,
+      code,
+      discountType,
+      percentageValue: discountType === "percentage" ? normalizedPercentage : undefined,
+      fixedAmount: discountType === "fixed" ? fixedAmount : undefined,
+      endDate: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      productIds,
+      collectionIds,
+      senderRequireMinPurchase,
+      senderMinPurchaseAmount,
+      senderTimesPerUser,
+      senderTimesValue,
+      senderNewCustomersOnly,
+      recipientRequireMinPurchase,
+      recipientMinPurchaseAmount,
+      recipientTimesPerUser,
+      recipientTimesValue,
+      recipientNewCustomersOnly,
+      shareWhatsapp,
+      shareMessenger,
+      shareEmail,
+      productId: selectedProduct,
+      customMessage,
+      shopifyDiscountId,
+    });
+
+    await newCoupon.save();
 
     // If the new coupon is active, update the widget
     if (newCoupon.isActive) {
@@ -478,6 +477,19 @@ export const editCoupon = async (req, res) => {
                     title
                     code
                     status
+                    customerGets {
+                      value {
+                        ... on DiscountPercentage {
+                          percentage
+                        }
+                        ... on DiscountAmount {
+                          amount {
+                            amount
+                            currencyCode
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -567,6 +579,13 @@ export const editCoupon = async (req, res) => {
     });
   }
 };
+
+export const getCoupon = async (req, res) => {
+  try {
+    const session = res.locals.shopify.session;
+    if (!session)
+      return res.status(401).json({ error: "Unauthorized - Missing Session" });
+    const shop = req.query.shop || session.shop;
 
 export const getCoupon = async (req, res) => {
   try {
