@@ -534,24 +534,36 @@ export default function Widget() {
                         padding: 24,
                         minHeight: 180,
                         width: "100%",
+                        maxWidth: 500, // Add a max width for better layout
                         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                         display: "flex",
                         alignItems: "center",
                         gap: 24,
-                        justifyContent: "space-between",
+                        justifyContent: "center", // Center content
+                        flexDirection: "column", // Stack vertically for better responsiveness
                       }}
                     >
-                      <div>
+                      <div style={{ width: "100%" }}>
                         <p
                           style={{
                             color: colors.text,
                             fontSize: 18,
                             marginBottom: 12,
+                            textAlign: "center",
                           }}
                         >
                           {text}
                         </p>
-                        <div className="d-flex jcc">
+                        <div
+                          className="d-flex jcc"
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap", // Allow buttons to wrap
+                            gap: 16,
+                            justifyContent: "center",
+                            width: "100%",
+                          }}
+                        >
                           <ShareButtons
                             buttonStyle={buttonStyle}
                             direction="row"

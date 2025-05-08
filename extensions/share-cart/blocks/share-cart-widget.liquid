@@ -86,8 +86,12 @@
           padding: 24px;
           min-height: 180px;
           width: 100%;
+          max-width: 500px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.04);
           margin: 24px 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         ">
         <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
           <p style="
@@ -96,13 +100,21 @@
             margin-bottom: 12px;
             text-align: center;
           ">{{ message }}</p>
-          {% render 'share-cart-buttons',
-            button_style: widget_settings.button_style,
-            colors: widget_settings.colors,
-            direction: 'row',
-            coupon: widget_settings.coupon,
-            share_message: share_message
-          %}
+          <div style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            width: 100%;
+          ">
+            {% render 'share-cart-buttons',
+              button_style: widget_settings.button_style,
+              colors: widget_settings.colors,
+              direction: 'row',
+              coupon: widget_settings.coupon,
+              share_message: share_message
+            %}
+          </div>
           <p style="
             color: {{ widget_settings.colors.text }};
             font-size: 18px;
@@ -114,6 +126,7 @@
         </div>`;
         var tempDiv = document.createElement('div');
         tempDiv.innerHTML = widgetHtml;
+        // Insert AFTER the Buy Now button (below)
         buyNowBtn.parentNode.insertBefore(tempDiv.firstChild, buyNowBtn.nextSibling);
       }
     });
