@@ -193,7 +193,7 @@ export const createCoupon = async (req, res) => {
         };
       } else if (discountType === "fixed") {
         customerGets = {
-          value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+          value: { discountAmount: { amount: Number(fixedAmount) } },
           items: {
             all: false,
             ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
@@ -363,6 +363,7 @@ export const editCoupon = async (req, res) => {
       isActive,
     } = req.body;
 
+    // First, find the coupon but don't update it yet
     const coupon = await Coupon.findOne({ _id: couponId, shop });
     if (!coupon) {
       return res.status(404).json({
@@ -371,93 +372,98 @@ export const editCoupon = async (req, res) => {
       });
     }
 
-    // Update coupon fields
-    if (name) coupon.name = name;
+    // Prepare the updates in memory but don't save yet
+    const couponUpdates = {};
+    if (name) couponUpdates.name = name;
     if (discountType) {
-      coupon.discountType = discountType;
+      couponUpdates.discountType = discountType;
       if (discountType === "percentage") {
-        coupon.percentageValue = percentageValue;
-        coupon.fixedAmount = undefined;
+        couponUpdates.percentageValue = percentageValue;
+        couponUpdates.fixedAmount = undefined;
       } else if (discountType === "fixed") {
-        coupon.fixedAmount = fixedAmount;
-        coupon.percentageValue = undefined;
+        couponUpdates.fixedAmount = fixedAmount;
+        couponUpdates.percentageValue = undefined;
       }
     }
-    if (endDate) coupon.endDate = endDate;
-    if (productIds) coupon.productIds = productIds;
-    if (collectionIds) coupon.collectionIds = collectionIds;
+    if (endDate) couponUpdates.endDate = endDate;
+    if (productIds) couponUpdates.productIds = productIds;
+    if (collectionIds) couponUpdates.collectionIds = collectionIds;
     if (senderRequireMinPurchase !== undefined)
-      coupon.senderRequireMinPurchase = senderRequireMinPurchase;
+      couponUpdates.senderRequireMinPurchase = senderRequireMinPurchase;
     if (senderMinPurchaseAmount !== undefined)
-      coupon.senderMinPurchaseAmount = senderMinPurchaseAmount;
+      couponUpdates.senderMinPurchaseAmount = senderMinPurchaseAmount;
     if (senderTimesPerUser !== undefined)
-      coupon.senderTimesPerUser = senderTimesPerUser;
+      couponUpdates.senderTimesPerUser = senderTimesPerUser;
     if (senderTimesValue !== undefined)
-      coupon.senderTimesValue = senderTimesValue;
+      couponUpdates.senderTimesValue = senderTimesValue;
     if (senderNewCustomersOnly !== undefined)
-      coupon.senderNewCustomersOnly = senderNewCustomersOnly;
+      couponUpdates.senderNewCustomersOnly = senderNewCustomersOnly;
     if (recipientRequireMinPurchase !== undefined)
-      coupon.recipientRequireMinPurchase = recipientRequireMinPurchase;
+      couponUpdates.recipientRequireMinPurchase = recipientRequireMinPurchase;
     if (recipientMinPurchaseAmount !== undefined)
-      coupon.recipientMinPurchaseAmount = recipientMinPurchaseAmount;
+      couponUpdates.recipientMinPurchaseAmount = recipientMinPurchaseAmount;
     if (recipientTimesPerUser !== undefined)
-      coupon.recipientTimesPerUser = recipientTimesPerUser;
+      couponUpdates.recipientTimesPerUser = recipientTimesPerUser;
     if (recipientTimesValue !== undefined)
-      coupon.recipientTimesValue = recipientTimesValue;
+      couponUpdates.recipientTimesValue = recipientTimesValue;
     if (recipientNewCustomersOnly !== undefined)
-      coupon.recipientNewCustomersOnly = recipientNewCustomersOnly;
-    if (shareWhatsapp !== undefined) coupon.shareWhatsapp = shareWhatsapp;
-    if (shareMessenger !== undefined) coupon.shareMessenger = shareMessenger;
-    if (shareEmail !== undefined) coupon.shareEmail = shareEmail;
-    if (selectedProduct) coupon.productId = selectedProduct;
-    if (customMessage !== undefined) coupon.customMessage = customMessage;
-    if (isActive !== undefined) coupon.isActive = isActive;
+      couponUpdates.recipientNewCustomersOnly = recipientNewCustomersOnly;
+    if (shareWhatsapp !== undefined) couponUpdates.shareWhatsapp = shareWhatsapp;
+    if (shareMessenger !== undefined) couponUpdates.shareMessenger = shareMessenger;
+    if (shareEmail !== undefined) couponUpdates.shareEmail = shareEmail;
+    if (selectedProduct) couponUpdates.productId = selectedProduct;
+    if (customMessage !== undefined) couponUpdates.customMessage = customMessage;
+    if (isActive !== undefined) couponUpdates.isActive = isActive;
 
-    await coupon.save();
-
-    // If coupon is set to active, update the widget
-    if (coupon.isActive) {
-      await Widget.findOneAndUpdate(
-        { shop },
-        { coupon: coupon._id },
-        { new: true }
-      );
-      
-      // Update Shopify metafields
-      await updateWidgetMetafields(shop, session);
-    }
-
+    // Update Shopify first if we have a shopifyDiscountId
     if (coupon.shopifyDiscountId) {
       try {
         const client = new shopify.api.clients.Graphql({ session });
+        
+        // Use couponUpdates or fall back to existing values
+        const updatedName = couponUpdates.name || coupon.name;
+        const updatedDiscountType = couponUpdates.discountType || coupon.discountType;
+        const updatedPercentageValue = updatedDiscountType === "percentage" ? 
+          (couponUpdates.percentageValue || coupon.percentageValue) : undefined;
+        const updatedFixedAmount = updatedDiscountType === "fixed" ? 
+          (couponUpdates.fixedAmount || coupon.fixedAmount) : undefined;
+        const updatedEndDate = couponUpdates.endDate || coupon.endDate;
+        const updatedProductIds = couponUpdates.productIds || coupon.productIds || [];
+        const updatedCollectionIds = couponUpdates.collectionIds || coupon.collectionIds || [];
+        const updatedSenderRequireMinPurchase = 
+          couponUpdates.senderRequireMinPurchase !== undefined ? 
+          couponUpdates.senderRequireMinPurchase : coupon.senderRequireMinPurchase;
+        const updatedSenderMinPurchaseAmount = 
+          couponUpdates.senderMinPurchaseAmount !== undefined ? 
+          couponUpdates.senderMinPurchaseAmount : coupon.senderMinPurchaseAmount;
 
         let customerGets;
-        if (discountType === "percentage") {
+        if (updatedDiscountType === "percentage") {
           customerGets = {
-            value: { percentage: Number(percentageValue) },
+            value: { percentage: Number(updatedPercentageValue) },
             items: {
               all: false,
-              ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
+              ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
+              ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
             },
           };
-        } else if (discountType === "fixed") {
+        } else if (updatedDiscountType === "fixed") {
           customerGets = {
-            value: { fixedAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+            value: { discountAmount: { amount: Number(updatedFixedAmount) } },
             items: {
               all: false,
-              ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-              ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
+              ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
+              ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
             },
           };
         }
 
         // Build minimumRequirement if provided
         let minimumRequirement;
-        if (senderRequireMinPurchase && senderMinPurchaseAmount) {
+        if (updatedSenderRequireMinPurchase && updatedSenderMinPurchaseAmount) {
           minimumRequirement = {
             subtotal: {
-              greaterThanOrEqualToSubtotal: String(senderMinPurchaseAmount),
+              greaterThanOrEqualToSubtotal: String(updatedSenderMinPurchaseAmount),
             },
           };
         }
@@ -483,11 +489,11 @@ export const editCoupon = async (req, res) => {
         const variables = {
           id: coupon.shopifyDiscountId,
           basicCodeDiscount: {
-            title: coupon.name,
+            title: updatedName,
             code: coupon.code,
             startsAt: coupon.createdAt.toISOString(),
-            endsAt: coupon.endDate
-              ? new Date(coupon.endDate).toISOString()
+            endsAt: updatedEndDate
+              ? new Date(updatedEndDate).toISOString()
               : undefined,
             customerGets,
             customerSelection: { all: true },
@@ -520,6 +526,22 @@ export const editCoupon = async (req, res) => {
           error: e.message,
         });
       }
+    }
+
+    // Now that Shopify is updated successfully, update our database
+    Object.assign(coupon, couponUpdates);
+    await coupon.save();
+
+    // If coupon is set to active, update the widget
+    if (coupon.isActive) {
+      await Widget.findOneAndUpdate(
+        { shop },
+        { coupon: coupon._id },
+        { new: true }
+      );
+      
+      // Update Shopify metafields
+      await updateWidgetMetafields(shop, session);
     }
 
     return res.status(200).json({
