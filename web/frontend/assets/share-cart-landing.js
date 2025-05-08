@@ -26,6 +26,29 @@
 
   async function applyDiscount(discount) {
     if (discount) {
+      // Track that the discount was applied
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const domain = window.location.hostname;
+        
+        // Send analytics data to backend
+        await fetch('https://share-cart.onrender.com/analytics/coupon-usage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            couponCode: discount,
+            userType: 'recipient', // This is a recipient using a shared cart
+            shop: domain,
+            // We can't know the order value yet as the purchase hasn't completed
+            // The webhook will handle the full details
+          })
+        });
+      } catch (err) {
+        console.error('Error recording coupon usage:', err);
+      }
+      
       window.location.href = `/discount/${discount}?redirect=/cart`;
     } else {
       window.location.href = "/cart";

@@ -102,6 +102,46 @@ export const recordCouponUsage = async (req, res) => {
   }
 };
 
+// Record public coupon usage
+export const recordPublicCouponUsage = async (req, res) => {
+  try {
+    const { couponCode, shop } = req.body;
+    
+    if (!shop || !couponCode) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Shop and coupon code are required' 
+      });
+    }
+    
+    // Find the coupon
+    const coupon = await Coupon.findOne({ code: couponCode, shop });
+    if (!coupon) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Coupon not found' 
+      });
+    }
+    
+    // Update base stats - the webhook will handle the full details
+    await Coupon.findByIdAndUpdate(coupon._id, { 
+      $inc: { convertedCount: 1 }
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Coupon usage recorded' 
+    });
+  } catch (error) {
+    console.error('Error recording public coupon usage:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to record coupon usage',
+      error: error.message 
+    });
+  }
+};
+
 // Get analytics data for dashboard
 export const getDashboardAnalytics = async (req, res) => {
   try {
