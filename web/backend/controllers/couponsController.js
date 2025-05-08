@@ -621,21 +621,30 @@ export const deleteCoupon = async (req, res) => {
     if (deletedCoupon && deletedCoupon.shopifyDiscountId) {
       try {
         const client = new shopify.api.clients.Graphql({ session });
-        const mutation = `
-          mutation discountCodeBasicDelete($id: ID!) {
-            discountCodeBasicDelete(id: $id) {
-              deletedCodeDiscountId
-              userErrors { field message }
-            }
-          }
-        `;
-        const variables = { id: deletedCoupon.shopifyDiscountId };
         const data = await client.query({
-          data: { query: mutation, variables },
+          data: {
+            query: `mutation discountCodeDelete($id: ID!) {
+              discountCodeDelete(id: $id) {
+                deletedCodeDiscountId
+                userErrors {
+                  field
+                  code
+                  message
+                }
+              }
+            }`,
+            variables: {
+              id: deletedCoupon.shopifyDiscountId,
+            },
+          },
         });
-        const userErrors = data.body.data.discountCodeBasicDelete.userErrors;
-        if (userErrors && userErrors.length > 0) {
-          console.error("Shopify discount delete errors:", userErrors);
+
+        const response = data.body.data.discountCodeDelete;
+        if (response.userErrors && response.userErrors.length > 0) {
+          console.error(
+            "Shopify discount deletion errors:",
+            response.userErrors
+          );
         }
       } catch (e) {
         console.error("Failed to delete Shopify Discount:", e);
@@ -675,21 +684,31 @@ export const activateCoupon = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Coupon ID is required" });
 
+    // Get all currently active coupons before deactivating them
+    const activeCoupons = await Coupon.find({ 
+      shop, 
+      isActive: true,
+      _id: { $ne: couponId } // Exclude the coupon we're activating
+    });
+    
+    // Deactivate all coupons in our database
     await Coupon.updateMany({ shop }, { isActive: false });
+    
+    // Activate the specified coupon
     const updated = await Coupon.findOneAndUpdate(
       { _id: couponId, shop },
       { isActive: true },
       { new: true }
     );
+    
     if (!updated) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Coupon not found or does not belong to this shop",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found or does not belong to this shop",
+      });
     }
 
+    // Update widget to use the activated coupon
     if (updated) {
       await Widget.findOneAndUpdate(
         { shop },
@@ -701,25 +720,79 @@ export const activateCoupon = async (req, res) => {
       await updateWidgetMetafields(shop, session);
     }
 
-    // Optionally activate in Shopify (usually not needed, code is active by default)
+    // Deactivate previously active coupons in Shopify
+    const client = new shopify.api.clients.Graphql({ session });
+    
+    for (const coupon of activeCoupons) {
+      if (coupon.shopifyDiscountId) {
+        try {
+          await client.query({
+            data: {
+              query: `mutation discountCodeDeactivate($id: ID!) {
+                discountCodeDeactivate(id: $id) {
+                  codeDiscountNode {
+                    codeDiscount {
+                      ... on DiscountCodeBasic {
+                        title
+                        status
+                      }
+                    }
+                  }
+                  userErrors {
+                    field
+                    code
+                    message
+                  }
+                }
+              }`,
+              variables: {
+                id: coupon.shopifyDiscountId,
+              },
+            },
+          });
+        } catch (e) {
+          console.error(`Failed to deactivate Shopify Discount ${coupon._id}:`, e);
+          // Continue with other deactivations even if one fails
+        }
+      }
+    }
+
+    // Activate the selected coupon in Shopify
     if (updated && updated.shopifyDiscountId) {
       try {
-        const client = new shopify.api.clients.Graphql({ session });
-        const mutation = `
-          mutation discountCodeBasicActivate($id: ID!) {
-            discountCodeBasicActivate(id: $id) {
-              codeDiscountNode { id }
-              userErrors { field message }
-            }
-          }
-        `;
-        const variables = { id: updated.shopifyDiscountId };
         const data = await client.query({
-          data: { query: mutation, variables },
+          data: {
+            query: `mutation discountCodeActivate($id: ID!) {
+              discountCodeActivate(id: $id) {
+                codeDiscountNode {
+                  codeDiscount {
+                    ... on DiscountCodeBasic {
+                      title
+                      status
+                      startsAt
+                      endsAt
+                    }
+                  }
+                }
+                userErrors {
+                  field
+                  code
+                  message
+                }
+              }
+            }`,
+            variables: {
+              id: updated.shopifyDiscountId,
+            },
+          },
         });
-        const userErrors = data.body.data.discountCodeBasicActivate.userErrors;
-        if (userErrors && userErrors.length > 0) {
-          console.error("Shopify discount activation errors:", userErrors);
+
+        const response = data.body.data.discountCodeActivate;
+        if (response.userErrors && response.userErrors.length > 0) {
+          console.error(
+            "Shopify discount activation errors:",
+            response.userErrors
+          );
         }
       } catch (e) {
         console.error("Failed to activate Shopify Discount:", e);
@@ -814,3 +887,89 @@ const updateWidgetMetafields = async (shop, session) => {
   }
 };
 
+export const deactivateCoupon = async (req, res) => {
+  try {
+    const session = res.locals.shopify.session;
+    if (!session)
+      return res.status(401).json({ error: "Unauthorized - Missing Session" });
+    const shop = req.query.shop || session.shop;
+    if (!shop)
+      return res
+        .status(400)
+        .json({ success: false, message: "Shop identifier not found" });
+
+    const couponId = req.params.id;
+    if (!couponId)
+      return res
+        .status(400)
+        .json({ success: false, message: "Coupon ID is required" });
+
+    const coupon = await Coupon.findOne({ _id: couponId, shop });
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found or does not belong to this shop",
+      });
+    }
+
+    // Update our local database
+    coupon.isActive = false;
+    await coupon.save();
+
+    // Deactivate in Shopify
+    if (coupon.shopifyDiscountId) {
+      try {
+        const client = new shopify.api.clients.Graphql({ session });
+        const data = await client.query({
+          data: {
+            query: `mutation discountCodeDeactivate($id: ID!) {
+              discountCodeDeactivate(id: $id) {
+                codeDiscountNode {
+                  codeDiscount {
+                    ... on DiscountCodeBasic {
+                      title
+                      status
+                      startsAt
+                      endsAt
+                    }
+                  }
+                }
+                userErrors {
+                  field
+                  code
+                  message
+                }
+              }
+            }`,
+            variables: {
+              id: coupon.shopifyDiscountId,
+            },
+          },
+        });
+
+        const response = data.body.data.discountCodeDeactivate;
+        if (response.userErrors && response.userErrors.length > 0) {
+          console.error(
+            "Shopify discount deactivation errors:",
+            response.userErrors
+          );
+        }
+      } catch (e) {
+        console.error("Failed to deactivate Shopify Discount:", e);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Coupon deactivated successfully",
+      coupon: coupon,
+    });
+  } catch (error) {
+    console.error("Error deactivating coupon:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while deactivating coupon",
+      error: error.message,
+    });
+  }
+};
