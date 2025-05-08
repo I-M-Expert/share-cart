@@ -102,14 +102,14 @@ const handleSelectPlan = async (id) => {
                 <div className="mb-2">
                   <p className="fs36 text-center fw700">{subscription.name}</p>
                 </div>
-                <div className="d-flex jcc aie">
+                {subscription?.name != 'free' && <div className="d-flex jcc aie">
                   <p className="fw600 fs32 text-center">
                     ${subscription.amount}
                   </p>
                   <p className="fs14" style={{ color: "#777777" }}>
                     /{subscription.duration}
                   </p>
-                </div>
+                </div>}
 
                 <p className="fs12">{subscription.description} </p>
 

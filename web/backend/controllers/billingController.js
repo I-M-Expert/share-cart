@@ -15,13 +15,13 @@ export const createSubscription = async (req, res) => {
     return res.status(400).send({ error: "Missing host parameter" });
   }
 
+  const shop = session.shop;
   try {
     const subscription = await Subscription.findById(subscriptionId);
     if (!subscription) {
       return res.status(404).send({ error: "Subscription not found" });
     }
 
-    const shop = session.shop;
 
     // If free plan, skip Shopify billing and confirm directly
     if (subscription.amount === 0) {
