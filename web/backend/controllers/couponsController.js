@@ -580,12 +580,6 @@ export const editCoupon = async (req, res) => {
   }
 };
 
-export const getCoupon = async (req, res) => {
-  try {
-    const session = res.locals.shopify.session;
-    if (!session)
-      return res.status(401).json({ error: "Unauthorized - Missing Session" });
-    const shop = req.query.shop || session.shop;
 
 export const getCoupon = async (req, res) => {
   try {
