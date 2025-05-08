@@ -4,8 +4,7 @@ import Coupon from '../models/Coupon.js';
 // Record when a customer shares a cart
 export const recordShareEvent = async (req, res) => {
   try {
-    const { platform, couponCode, cartValue, customerId } = req.body;
-    
+    const { platform, couponCode, cartValue, customerId, senderEmail, recipientEmail } = req.body;
     const shop = req.query.shop || req.body.shop;
 
     if (!shop) {
@@ -23,6 +22,20 @@ export const recordShareEvent = async (req, res) => {
         
         // Update coupon sent count
         await Coupon.findByIdAndUpdate(couponId, { $inc: { sentCount: 1 } });
+        
+        // Create Share record to track the sharing event
+        if (senderEmail && recipientEmail) {
+          await Share.create({
+            shop,
+            couponId,
+            couponCode,
+            senderEmail,
+            recipientEmail,
+            platform,
+            sharedAt: new Date(),
+            cartValue
+          });
+        }
       }
     }
     

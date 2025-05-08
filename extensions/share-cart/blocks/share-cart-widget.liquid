@@ -362,11 +362,16 @@
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            platform: platform,
-            couponCode: discount,
-            cartValue: cartValue,
-            shop: "{{ shop.domain }}"
-          })
+  platform: platform,
+  couponCode: discount,
+  cartValue: cartValue,
+  shop: "{{ shop.domain }}",
+  senderEmail: {% if customer %}
+    "{{ customer.email }}"
+  {% else %}
+    null
+  {% endif %}
+})
         }).catch(err => console.error('Failed to record share analytics:', err));
       });
       

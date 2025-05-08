@@ -25,7 +25,11 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
           // Get customer email for better tracking
           const customerEmail = order.customer ? order.customer.email : null;
           
-          // Determine if sender or recipient based on Share records rather than order count
+          // First, calculate the values
+          const orderValue = parseFloat(order.total_price) / 100;
+          const discountAmount = parseFloat(order.total_discounts) / 100;
+
+          // Then determine user type and update the share record
           let userType = 'unknown';
           
           if (customerEmail) {
@@ -39,6 +43,18 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
             
             if (shareRecord) {
               userType = shareRecord.senderEmail === customerEmail ? 'sender' : 'recipient';
+              
+              // Now update the Share record with the correctly defined orderValue
+              await Share.findByIdAndUpdate(shareRecord._id, {
+                $set: {
+                  converted: true,
+                  conversionDate: new Date(),
+                  orderId: order.id,
+                  orderValue: orderValue
+                }
+              });
+              
+              console.log(`Updated Share record ${shareRecord._id} with conversion data`);
             } else {
               // Fallback to the existing logic based on order count
               userType = order.customer && order.customer.orders_count <= 1 ? 'recipient' : 'sender';
@@ -47,10 +63,6 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
             // Fallback if no email is available
             userType = order.customer && order.customer.orders_count <= 1 ? 'recipient' : 'sender';
           }
-          
-          // Make sure we're getting the correct order value - Shopify sends amounts in cents
-          const orderValue = parseFloat(order.total_price) / 100;
-          const discountAmount = parseFloat(order.total_discounts) / 100;
           
           console.log(`Recording usage for ${userType} with order value: ${orderValue}`);
           
