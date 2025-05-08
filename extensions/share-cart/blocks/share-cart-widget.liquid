@@ -13,18 +13,19 @@
   {% assign discount = widget_settings.coupon.percentageValue | append: '%' %}
 {% endif %}
 
-
-
-
-  {% assign share_cart_link = 'https://' | append: shop.domain | append: '/tools/share-cart?cart=' %}
+{% assign share_cart_link = 'https://' | append: shop.domain | append: '/tools/share-cart?cart=' %}
 {% assign message = widget_settings.text %}
 {% assign share_message = widget_settings.coupon.customMessage 
   | replace: '[Insert Store Name]', store_name 
   | replace: '[Insert Discount]', discount 
   | replace: '[Insert Link]', share_cart_link %}
 
-{% if display_str contains 'cart_page' %}
-  <!-- Cart Page Widget -->
+{%- comment -%}
+  Only render widget on selected pages
+{%- endcomment -%}
+
+{%- if display_str contains 'cart_page' and template == 'cart' -%}
+  <!-- Cart Page Widget (bottom of cart page) -->
   <div style="
     background: {{ widget_settings.colors.background }};
     border-radius: 12px;
@@ -36,8 +37,10 @@
     align-items: center;
     gap: 24px;
     justify-content: center;
+    margin-top: 32px;
   ">
     <div>
+      <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
@@ -52,60 +55,73 @@
         justify-content: center;
       ">
       {% render 'share-cart-buttons',
-  button_style: widget_settings.button_style,
-  colors: widget_settings.colors,
-  direction: 'row',
-  coupon: widget_settings.coupon,
-  share_message: share_message
-%}
-    </div>
+        button_style: widget_settings.button_style,
+        colors: widget_settings.colors,
+        direction: 'row',
+        coupon: widget_settings.coupon,
+        share_message: share_message
+      %}
+      </div>
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
         margin-bottom: 12px;
         text-align: center;
         margin-top: 8px;
+        cursor: pointer;
       ">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
 {% endif %}
 
-{% if display_str contains 'product_page' %}
-  <!-- Product Page Widget -->
-  <div style="
-    background: {{ widget_settings.colors.background }};
-    border-radius: 12px;
-    padding: 24px;
-    min-height: 180px;
-    width: 100%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    margin: 24px 0;
-  ">
-    <p style="
-      color: {{ widget_settings.colors.text }};
-      font-size: 18px;
-      margin-bottom: 12px;
-      text-align: center;
-    ">{{ message }}</p>
-    {% render 'share-cart-buttons',
-  button_style: widget_settings.button_style,
-  colors: widget_settings.colors,
-  direction: 'row',
-  coupon: widget_settings.coupon,
-  share_message: share_message
-%}
-    <p style="
-      color: {{ widget_settings.colors.text }};
-      font-size: 18px;
-      margin-bottom: 12px;
-      text-align: center;
-      margin-top: 8px;
-    ">No thanks! I prefer not to get a discount</p>
-  </div>
+{%- if display_str contains 'product_page' and template == 'product' -%}
+  <!-- Product Page Widget (below Buy Now button) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var buyNowBtn = document.querySelector('form[action*="/cart/add"] [type="submit"], button[name="add"]');
+      if (buyNowBtn) {
+        var widgetHtml = `<div id="share-cart-product-widget" style="
+          background: {{ widget_settings.colors.background }};
+          border-radius: 12px;
+          padding: 24px;
+          min-height: 180px;
+          width: 100%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          margin: 24px 0;
+        ">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+          ">{{ message }}</p>
+          {% render 'share-cart-buttons',
+            button_style: widget_settings.button_style,
+            colors: widget_settings.colors,
+            direction: 'row',
+            coupon: widget_settings.coupon,
+            share_message: share_message
+          %}
+          <p style="
+            color: {{ widget_settings.colors.text }};
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+            margin-top: 8px;
+            cursor: pointer;
+          ">No thanks! I prefer not to get a discount</p>
+        </div>`;
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = widgetHtml;
+        buyNowBtn.parentNode.insertBefore(tempDiv.firstChild, buyNowBtn.nextSibling);
+      }
+    });
+  </script>
 {% endif %}
 
-{% if display_str contains 'add_to_cart' %}
-  <!-- Add to Cart Popup -->
+{%- if display_str contains 'add_to_cart' and template == 'product' -%}
+  <!-- Add to Cart Popup (only on product page) -->
   <div id="share-cart-popup" style="
     display: none;
     position: fixed;
@@ -129,6 +145,7 @@
       gap: 24px;
       position: relative;
     ">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
@@ -136,12 +153,12 @@
         text-align: center;
       ">{{ message }}</p>
       {% render 'share-cart-buttons',
-  button_style: widget_settings.button_style,
-  colors: widget_settings.colors,
-  direction: 'column',
-  coupon: widget_settings.coupon,
-  share_message: share_message
-%}
+        button_style: widget_settings.button_style,
+        colors: widget_settings.colors,
+        direction: 'column',
+        coupon: widget_settings.coupon,
+        share_message: share_message
+      %}
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
@@ -154,8 +171,8 @@
   </div>
 {% endif %}
 
-{% if display_str contains 'checkout' %}
-  <!-- Checkout Popup -->
+{%- if display_str contains 'checkout' and template == 'cart' -%}
+  <!-- Checkout Popup (only on cart page) -->
   <div id="share-cart-popup" style="
     display: none;
     position: fixed;
@@ -179,6 +196,7 @@
       gap: 24px;
       position: relative;
     ">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
@@ -186,12 +204,12 @@
         text-align: center;
       ">{{ message }}</p>
       {% render 'share-cart-buttons',
-  button_style: widget_settings.button_style,
-  colors: widget_settings.colors,
-  direction: 'column',
-  coupon: widget_settings.coupon,
-  share_message: share_message
-%}
+        button_style: widget_settings.button_style,
+        colors: widget_settings.colors,
+        direction: 'column',
+        coupon: widget_settings.coupon,
+        share_message: share_message
+      %}
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 18px;
@@ -338,6 +356,81 @@
     }
   }
 
+  // --- Add this code for the share success popup ---
+  function showShareSuccessPopup(discountText) {
+    // Remove any existing popup
+    var existing = document.getElementById('share-success-popup');
+    if (existing) existing.remove();
+
+    var popup = document.createElement('div');
+    popup.id = 'share-success-popup';
+    popup.style.position = 'fixed';
+    popup.style.top = '0';
+    popup.style.left = '0';
+    popup.style.right = '0';
+    popup.style.bottom = '0';
+    popup.style.background = 'rgba(0,0,0,0.32)';
+    popup.style.zIndex = '10000';
+    popup.style.display = 'flex';
+    popup.style.alignItems = 'center';
+    popup.style.justifyContent = 'center';
+
+    popup.innerHTML = `
+      <div style="
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px 24px;
+        min-width: 320px;
+        max-width: 90vw;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        position: relative;
+        text-align: center;
+      ">
+        <button id="close-share-success-popup" style="
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: none;
+          border: none;
+          color: #888;
+          font-size: 1.8em;
+          cursor: pointer;
+          line-height: 1;
+          padding: 0;
+        " aria-label="Close">&times;</button>
+        
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+        <h2 style="margin:0 0 8px 0; color: #32c6ce; font-size: 1.5em;">Share successful</h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="50px" height="50px" viewBox="0 0 24 24"><path fill="#32c6ce" fill-rule="evenodd" d="M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18m-.232-5.36l5-6l-1.536-1.28l-4.3 5.159l-2.225-2.226l-1.414 1.414l3 3l.774.774z" clip-rule="evenodd"/></svg>
+        <p style="margin:0 0 8px 0; font-size: 1.1em;">A <b>${discountText} discount coupon</b> has been added to your cart.</p>
+        <button id="continue-to-checkout-btn" style="
+          background: #32c6ce;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          padding: 12px 32px;
+          font-size: 1.1em;
+          font-weight: 600;
+          cursor: pointer;
+          margin-top: 8px;
+        ">Continue to checkout</button>
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    document.getElementById('continue-to-checkout-btn').onclick = function() {
+      window.location.href = '/checkout';
+    };
+    document.getElementById('close-share-success-popup').onclick = function() {
+      popup.remove();
+    };
+  }
+
   // Update your handleShareButtonClick function
   function handleShareButtonClick(platform) {
     // Track that sharing happened
@@ -375,6 +468,11 @@
         }).catch(err => console.error('Failed to record share analytics:', err));
       });
       
+    
+    var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue }}%{% endif %}`;
+      // Show the share success popup
+    showShareSuccessPopup(discountText); // Pass the actual discount dynamically
+
     // Return true to allow the default link click behavior
     return true;
   }

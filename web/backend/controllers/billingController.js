@@ -5,8 +5,8 @@ import shopify from "../../shopify.js";
 
 export const createSubscription = async (req, res) => {
   const session = res.locals.shopify.session;
-  const { subscriptionId } = req.body; // Get host from request body
-const host = process.env.HOST || process.env.APP_URL;
+  const { subscriptionId } = req.body;
+  const host = process.env.HOST || process.env.APP_URL;
   if (!session) {
     return res.status(401).send({ error: "Unauthorized" });
   }
@@ -22,6 +22,37 @@ const host = process.env.HOST || process.env.APP_URL;
     }
 
     const shop = session.shop;
+
+    // If free plan, skip Shopify billing and confirm directly
+    if (subscription.amount === 0) {
+      // Directly create UserSubscription and User
+      const startDate = new Date();
+      let endDate;
+      if (subscription.duration === "monthly") {
+        endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      } else if (subscription.duration === "yearly") {
+        endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+      } else {
+        throw new Error("Invalid subscription duration");
+      }
+
+      await UserSubscription.create({
+        shop,
+        subscription: subscription._id,
+        status: "ACTIVE",
+        startDate,
+        endDate,
+        chargeId: null,
+      });
+
+      const user = await User.create({ shop });
+
+      return res.status(200).json({
+        url: `/?shop=${shop}&host=${host}&subscriptionActive=true`,
+        user,
+        freePlan: true,
+      });
+    }
 
     const mutation = `
       mutation createAppSubscription($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean!) {
@@ -61,7 +92,6 @@ const host = process.env.HOST || process.env.APP_URL;
       ],
       returnUrl: `https://${shop}/admin/apps/${process.env.APP_NAME}/confirmation?shop=${shop}&host=${host}&subscriptionId=${subscriptionId}`,
       test: true,
-      trialDays: 8,
     };
 
     const client = new shopify.api.clients.Graphql({ session });
@@ -99,14 +129,13 @@ const host = process.env.HOST || process.env.APP_URL;
       )}`,
     });
   }
-
 };
 
 export const confirmSubscription = async (req, res) => {
   const { shop, subscriptionId, charge_id } = req.query;
   const host = process.env.HOST;
 
-  if (!shop || !subscriptionId || !charge_id) {
+  if (!shop || !subscriptionId) {
     return res.status(400).send("Missing required parameters");
   }
 
@@ -128,15 +157,11 @@ export const confirmSubscription = async (req, res) => {
     }
 
     const startDate = new Date();
-    const trialEndDate = new Date(
-      startDate.getTime() + 8 * 24 * 60 * 60 * 1000
-    ); // 8 days trial
-
     let endDate;
     if (subscription.duration === "monthly") {
-      endDate = new Date(trialEndDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days after trial
+      endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
     } else if (subscription.duration === "yearly") {
-      endDate = new Date(trialEndDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 days after trial
+      endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
     } else {
       throw new Error("Invalid subscription duration");
     }
@@ -147,21 +172,18 @@ export const confirmSubscription = async (req, res) => {
       status: "ACTIVE",
       startDate,
       endDate,
-      trialEndDate,
-      chargeId: charge_id,
+      chargeId: subscription.amount === 0 ? null : charge_id,
     });
 
-    const user = await User.create({shop});
+    const user = await User.create({ shop });
 
-    return res
-      .status(200)
-      .json({
-        url: `/?shop=${shop}&host=${host}&subscriptionActive=true`,
-        user,
-      });
+    return res.status(200).json({
+      url: `/?shop=${shop}&host=${host}&subscriptionActive=true`,
+      user,
+    });
   } catch (error) {
     console.error("Detailed error:", error);
-    return res.status(500).json({error: error});
+    return res.status(500).json({ error: error });
   }
 };
 
