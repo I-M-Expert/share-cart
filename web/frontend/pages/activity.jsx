@@ -75,7 +75,7 @@ export default function Activity() {
     a.couponCode || "-",
     a.sender || "-",
     a.receiver || "-",
-    a.status.charAt(0).toUpperCase() + a.status.slice(1),
+    a.status || "-",
     a.orderValue ? `$${a.orderValue.toFixed(2)}` : "-",
     a.discountAmount ? `$${a.discountAmount.toFixed(2)}` : "-",
     formatDate(a.timestamp),
@@ -84,14 +84,24 @@ export default function Activity() {
 return (
     <div
         className="dashboard-container"
-        style={{ display: "flex", minHeight: "100vh" }}
+        style={{
+            display: "flex",
+            minHeight: "100vh",
+            flexDirection: "column",
+        }}
     >
         <Sidebar />
         <main
             className="main-content"
-            style={{ flexGrow: 1, padding: "32px 32px 32px 0", marginLeft: 0 }}
+            style={{
+                flexGrow: 1,
+                padding: "32px 32px 32px 0",
+                marginLeft: 0,
+                display: "flex",
+                flexDirection: "column",
+            }}
         >
-            <Page title="Coupon Activity">
+            <Page title="Coupon Activity" fullWidth>
                 {notification && (
                     <Banner status={notification.status} title={notification.message} />
                 )}
@@ -119,9 +129,11 @@ return (
                         </Button>
                     </Stack>
                 </Card>
-                <div style={{ marginTop: 24 }}>
+                <div style={{ marginTop: 24, flexGrow: 1, display: "flex", flexDirection: "column" }}>
                     {loadingActivity ? (
-                        <Spinner accessibilityLabel="Loading activities" size="large" />
+                        <div style={{ flexGrow: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                            <Spinner accessibilityLabel="Loading activities" size="large" />
+                        </div>
                     ) : (
                         <Card>
                             <DataTable

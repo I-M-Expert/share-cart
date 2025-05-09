@@ -342,17 +342,18 @@ export const getCouponActivities = async (req, res) => {
       };
     }
 
-    // Populate coupon code and name
+    // Fetch all coupon activities (assuming each activity has sender, receiver, status, etc.)
     const activities = await CouponUsage.find(filter)
       .sort({ timestamp: -1 })
       .populate({ path: "couponId", select: "name code" })
       .lean();
 
+    // Ensure both sender and receiver are present in each activity
     const formatted = activities.map((a) => ({
       id: a._id,
-      sender: a.userType === "sender" ? a.customerName : "",
-      receiver: a.userType === "recipient" ? a.customerName : "",
-      status: a.userType,
+      sender: a.senderName || a.sender || "-",
+      receiver: a.receiverName || a.receiver || "-",
+      status: a.status || "-", // e.g., "Sent", "Confirmed", "Redeemed"
       orderValue: a.orderValue,
       discountAmount: a.discountAmount,
       couponName: a.couponId?.name || "",
