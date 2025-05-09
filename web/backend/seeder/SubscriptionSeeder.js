@@ -159,7 +159,7 @@ const subscriptions = [
 ];
 
 const seedDB = async () => {
-  await Subscription.deleteMany({});
+  // await Subscription.deleteMany({});
   await Subscription.insertMany(subscriptions);
   console.log("Database seeded!");
   mongoose.connection.close();
