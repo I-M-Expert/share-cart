@@ -320,3 +320,49 @@ const getTimeSeriesData = async (Model, shop, startDate, endDate) => {
   
   return formattedData;
 };
+
+// Get coupon activities with optional date range
+export const getCouponActivities = async (req, res) => {
+  try {
+    const session = res.locals.shopify?.session;
+    if (!session) {
+      return res.status(401).json({ success: false, message: "Unauthorized - Missing Session" });
+    }
+    const shop = req.query.shop || session.shop;
+    if (!shop) {
+      return res.status(400).json({ success: false, message: "Shop identifier required" });
+    }
+
+    const { startDate, endDate } = req.query;
+    const filter = { shop };
+    if (startDate && endDate) {
+      filter.timestamp = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    // Populate coupon code and name
+    const activities = await CouponUsage.find(filter)
+      .sort({ timestamp: -1 })
+      .populate({ path: "couponId", select: "name code" })
+      .lean();
+
+    const formatted = activities.map((a) => ({
+      id: a._id,
+      sender: a.userType === "sender" ? a.customerName : "",
+      receiver: a.userType === "recipient" ? a.customerName : "",
+      status: a.userType,
+      orderValue: a.orderValue,
+      discountAmount: a.discountAmount,
+      couponName: a.couponId?.name || "",
+      couponCode: a.couponCode,
+      timestamp: a.timestamp,
+    }));
+
+    res.json({ success: true, activities: formatted });
+  } catch (error) {
+    console.error("Error fetching coupon activities:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch activities" });
+  }
+};
