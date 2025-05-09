@@ -81,78 +81,78 @@ export default function Activity() {
     formatDate(a.timestamp),
   ]);
 
-  return (
+return (
     <div
-      className="dashboard-container"
-      style={{ display: "flex", minHeight: "100vh" }}
+        className="dashboard-container"
+        style={{ display: "flex", minHeight: "100vh" }}
     >
-      <Sidebar />
-      <main
-        className="main-content"
-        style={{ flexGrow: 1, padding: "32px 32px 32px 0", marginLeft: 0 }}
-      >
-        <Page title="Coupon Activity">
-          {notification && (
-            <Banner status={notification.status} title={notification.message} />
-          )}
-          <Card sectioned>
-            <Stack alignment="baseline" spacing="tight">
-              <TextField
-                label="Start Date"
-                type="date"
-                value={dateRange.start || ""}
-                onChange={handleDateChange("start")}
-                autoComplete="off"
-              />
-              <TextField
-                label="End Date"
-                type="date"
-                value={dateRange.end || ""}
-                onChange={handleDateChange("end")}
-                autoComplete="off"
-              />
-              <Button onClick={handleApplyFilter} primary>
-                Filter
-              </Button>
-              <Button onClick={handleClearFilter} disabled={!dateRange.start && !dateRange.end}>
-                Clear
-              </Button>
-            </Stack>
-          </Card>
-          <div style={{ marginTop: 24 }}>
-            {loadingActivity ? (
-              <Spinner accessibilityLabel="Loading activities" size="large" />
-            ) : (
-              <Card>
-                <DataTable
-                  columnContentTypes={[
-                    "text", // Coupon Name
-                    "text", // Coupon Code
-                    "text", // Sender
-                    "text", // Receiver
-                    "text", // Status
-                    "numeric", // Order Value
-                    "numeric", // Discount Amount
-                    "text", // Time
-                  ]}
-                  headings={[
-                    "Coupon Name",
-                    "Coupon Code",
-                    "Sender",
-                    "Receiver",
-                    "Status",
-                    "Order Value",
-                    "Discount",
-                    "Time",
-                  ]}
-                  rows={rows}
-                  footerContent={`Total: ${activities.length} activities`}
-                />
-              </Card>
-            )}
-          </div>
-        </Page>
-      </main>
+        <Sidebar />
+        <main
+            className="main-content"
+            style={{ flexGrow: 1, padding: "32px 32px 32px 0", marginLeft: 0 }}
+        >
+            <Page title="Coupon Activity">
+                {notification && (
+                    <Banner status={notification.status} title={notification.message} />
+                )}
+                <Card sectioned>
+                    <Stack alignment="end" spacing="tight">
+                        <TextField
+                            label="Start Date"
+                            type="date"
+                            value={dateRange.start || ""}
+                            onChange={handleDateChange("start")}
+                            autoComplete="off"
+                        />
+                        <TextField
+                            label="End Date"
+                            type="date"
+                            value={dateRange.end || ""}
+                            onChange={handleDateChange("end")}
+                            autoComplete="off"
+                        />
+                        <Button onClick={handleApplyFilter} primary>
+                            Filter
+                        </Button>
+                        <Button onClick={handleClearFilter} disabled={!dateRange.start && !dateRange.end}>
+                            Clear
+                        </Button>
+                    </Stack>
+                </Card>
+                <div style={{ marginTop: 24 }}>
+                    {loadingActivity ? (
+                        <Spinner accessibilityLabel="Loading activities" size="large" />
+                    ) : (
+                        <Card>
+                            <DataTable
+                                columnContentTypes={[
+                                    "text", // Coupon Name
+                                    "text", // Coupon Code
+                                    "text", // Sender
+                                    "text", // Receiver
+                                    "text", // Status
+                                    "numeric", // Order Value
+                                    "numeric", // Discount Amount
+                                    "text", // Time
+                                ]}
+                                headings={[
+                                    "Coupon Name",
+                                    "Coupon Code",
+                                    "Sender",
+                                    "Receiver",
+                                    "Status",
+                                    "Order Value",
+                                    "Discount",
+                                    "Time",
+                                ]}
+                                rows={rows}
+                                footerContent={`Total: ${activities.length} activities`}
+                            />
+                        </Card>
+                    )}
+                </div>
+            </Page>
+        </main>
     </div>
-  );
+);
 }
