@@ -106,7 +106,7 @@ return (
                     <Banner status={notification.status} title={notification.message} />
                 )}
                 <Card sectioned>
-                    <Stack alignment="end" spacing="tight">
+                    <Stack alignment="trailing" spacing="tight">
                         <TextField
                             label="Start Date"
                             type="date"
