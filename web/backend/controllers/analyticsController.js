@@ -342,24 +342,44 @@ export const getCouponActivities = async (req, res) => {
       };
     }
 
-    // Fetch all coupon activities (assuming each activity has sender, receiver, status, etc.)
+    // Fetch all coupon usages
     const activities = await CouponUsage.find(filter)
       .sort({ timestamp: -1 })
       .populate({ path: "couponId", select: "name code" })
       .lean();
 
-    // Ensure both sender and receiver are present in each activity
-    const formatted = activities.map((a) => ({
-      id: a._id,
-      sender: a.senderName || a.sender || "-",
-      receiver: a.receiverName || a.receiver || "-",
-      status: a.status || "-", // e.g., "Sent", "Confirmed", "Redeemed"
-      orderValue: a.orderValue,
-      discountAmount: a.discountAmount,
-      couponName: a.couponId?.name || "",
-      couponCode: a.couponCode,
-      timestamp: a.timestamp,
-    }));
+    // Group by couponCode and orderValue (or customerId if available)
+    const grouped = {};
+    for (const a of activities) {
+      const key = `${a.couponCode}|${a.orderValue || ""}|${a.customerId || ""}`;
+      if (!grouped[key]) grouped[key] = {};
+      grouped[key][a.userType] = a;
+    }
+
+    // Build rows: sender + receiver per coupon usage
+    const formatted = Object.values(grouped).map((pair) => {
+      const sender = pair.sender;
+      const receiver = pair.recipient;
+      // Prefer receiver's orderValue/discount if available, else sender's
+      const orderValue = receiver?.orderValue ?? sender?.orderValue ?? null;
+      const discountAmount = receiver?.discountAmount ?? sender?.discountAmount ?? null;
+      const timestamp = receiver?.timestamp ?? sender?.timestamp ?? null;
+      let status = "-";
+      if (sender && receiver) status = "Confirmed";
+      else if (sender) status = "Sent";
+      else if (receiver) status = "Redeemed";
+
+      return {
+        couponName: sender?.couponId?.name || receiver?.couponId?.name || "",
+        couponCode: sender?.couponCode || receiver?.couponCode || "",
+        sender: sender?.customerName || "-",
+        receiver: receiver?.customerName || "-",
+        status,
+        orderValue,
+        discountAmount,
+        timestamp,
+      };
+    });
 
     res.json({ success: true, activities: formatted });
   } catch (error) {
