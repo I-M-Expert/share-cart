@@ -96,7 +96,7 @@ export default function Activity() {
             <Banner status={notification.status} title={notification.message} />
           )}
           <Card sectioned>
-            <Stack alignment="center" spacing="tight">
+            <Stack alignment="baseline" spacing="tight">
               <TextField
                 label="Start Date"
                 type="date"

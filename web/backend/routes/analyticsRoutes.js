@@ -8,6 +8,10 @@ router.post('/share', recordShareEvent);
 router.post('/coupon-usage', recordCouponUsage);
 router.post('/public-coupon-usage', recordPublicCouponUsage); // New public endpoint
 router.get('/dashboard', shopify.validateAuthenticatedSession(), getDashboardAnalytics);
-router.get("/coupon-activities", getCouponActivities);
+router.get(
+  "/coupon-activities",
+  shopify.validateAuthenticatedSession(),
+  getCouponActivities
+);
 
 export default router;

@@ -302,7 +302,7 @@ export default function Dashboard() {
                     borderRadius: 8,
                     background: "#f9f9fc",
                     cursor : 'pointer',
-                    heigth: '80px'
+                    height: '80px'
                   }}
                   className="d-flex flex-grow-1 aic jcc gap-2"
                   onClick={() => navigate(item.link)}
