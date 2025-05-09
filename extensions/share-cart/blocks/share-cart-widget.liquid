@@ -338,7 +338,7 @@
         console.log('Raw message:', rawMessage);
         
         var storeName = "{{ shop.name | escape }}";
-        var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue }}%{% endif %}`;
+        var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue | times: 100 }}%{% endif %}`;
         
         // Use a fallback message if rawMessage is empty
         if (!rawMessage || rawMessage.trim() === '') {
@@ -513,7 +513,7 @@
       });
       
     
-    var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue }}%{% endif %}`;
+    var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue | times: 100 }}%{% endif %}`;
       // Show the share success popup
     showShareSuccessPopup(discountText); // Pass the actual discount dynamically
 
