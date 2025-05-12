@@ -81,6 +81,30 @@ export default {
       //   "shop_id": 954889,
       //   "shop_domain": "{shop}.myshopify.com"
       // }
+
+      // --- Add this block ---
+      try {
+        const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
+        const email = payload.shop_domain; // Or use stored email if available
+
+        // Remove from "installed" list (optional: use GetResponse API to search and remove)
+        // Add to "uninstalled" list
+        await fetch("https://api.getresponse.com/v3/contacts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": `api-key ${getResponseApiKey}`,
+          },
+          body: JSON.stringify({
+            email: email,
+            name: email,
+            campaign: { campaignId: process.env.GETRESPONSE_UNINSTALLED_LIST_ID },
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to update GetResponse list on uninstall:", e);
+      }
+      // --- End block ---
     },
   },
 };

@@ -53,6 +53,49 @@ app.get(
   async (req, res, next) => {
     const session = res.locals.shopify.session;
     await registerWebhooks(session, shopify);
+
+    // --- Add this block ---
+    try {
+      // Replace with actual GetResponse API endpoint and API key
+      const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
+      const shop = session.shop;
+      const accessToken = session.accessToken;
+
+      let email = shop; // fallback
+      try {
+        const response = await fetch(
+          `https://${shop}/admin/api/2025-04/shop.json`,
+          {
+            method: "GET",
+            headers: {
+              "X-Shopify-Access-Token": accessToken,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        email = data.shop?.email || shop;
+      } catch (e) {
+        console.error("Failed to fetch shop email:", e);
+      }
+
+      await fetch("https://api.getresponse.com/v3/contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Auth-Token": `api-key ${getResponseApiKey}`,
+        },
+        body: JSON.stringify({
+          email: email || shop,
+          name: shop,
+          campaign: { campaignId: process.env.GETRESPONSE_LIST_ID }, // List ID for "installed"
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to add user to GetResponse list:", e);
+    }
+    // --- End block ---
+
     next();
   },
   shopify.redirectToShopifyOrAppRoot()

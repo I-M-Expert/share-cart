@@ -26,30 +26,34 @@
 
 {%- if display_str contains 'cart_page' and template == 'cart' -%}
   <!-- Cart Page Widget (bottom of cart page) -->
-  <div style="
+  <div id="share-cart-cart-widget" style="
     background: {{ widget_settings.colors.background }};
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 18px;
+    padding: 32px 28px;
     min-height: 180px;
     width: 100%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 6px 32px rgba(50, 198, 206, 0.18), 0 1.5px 6px rgba(0,0,0,0.08);
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 32px;
     justify-content: center;
-    margin-top: 32px;
+    margin-top: 40px;
+    transition: box-shadow 0.2s;
   ">
     <div>
-      <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
+      </div>
       <p style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 12px;
+        font-size: 20px;
+        margin-bottom: 16px;
         text-align: center;
+        font-weight: 500;
       ">{{ message }}</p>
       <div style="
         display: flex;
-        gap: 16px;
+        gap: 20px;
         flex-direction: row;
         align-items: center;
         justify-content: center;
@@ -62,14 +66,16 @@
         share_message: share_message
       %}
       </div>
-      <p style="
+      <p class="share-cart-no-thanks" style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 12px;
+        font-size: 17px;
+        margin-bottom: 10px;
         text-align: center;
-        margin-top: 8px;
+        margin-top: 16px;
         cursor: pointer;
-      ">No thanks! I prefer not to get a discount</p>
+        opacity: 0.7;
+        transition: color 0.2s, opacity 0.2s;
+      " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
 {% endif %}
@@ -82,28 +88,30 @@
       if (productFormButtons) {
         var widgetHtml = `<div id="share-cart-product-widget" style="
           background: {{ widget_settings.colors.background }};
-          border-radius: 12px;
-          padding: 24px;
+          border-radius: 18px;
+          padding: 32px 28px;
           min-height: 180px;
           width: 100%;
-          max-width: 500px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-          margin: 24px 0;
+          max-width: 520px;
+          box-shadow: 0 6px 32px rgba(50, 198, 206, 0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+          margin: 32px 0;
           display: flex;
           flex-direction: column;
           align-items: center;
+          transition: box-shadow 0.2s;
         ">
-        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
           <p style="
             color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 12px;
+            font-size: 20px;
+            margin-bottom: 16px;
             text-align: center;
+            font-weight: 500;
           ">{{ message }}</p>
           <div style="
             display: flex;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 20px;
             justify-content: center;
             width: 100%;
             max-width: 100%;
@@ -117,14 +125,16 @@
               share_message: share_message
             %}
           </div>
-          <p style="
+          <p class="share-cart-no-thanks" style="
             color: {{ widget_settings.colors.text }};
-            font-size: 18px;
-            margin-bottom: 12px;
+            font-size: 17px;
+            margin-bottom: 10px;
             text-align: center;
-            margin-top: 8px;
+            margin-top: 16px;
             cursor: pointer;
-          ">No thanks! I prefer not to get a discount</p>
+            opacity: 0.7;
+            transition: color 0.2s, opacity 0.2s;
+          " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
         </div>`;
 
         var tempDiv = document.createElement('div');
@@ -133,10 +143,8 @@
         // Insert after .product-form__buttons but outside the form
         var parent = productFormButtons.parentNode;
         if (parent.tagName === 'FORM') {
-          // Insert after the form, not inside it
           parent.parentNode.insertBefore(tempDiv.firstChild, parent.nextSibling);
         } else {
-          // Otherwise, just after the buttons
           parent.insertBefore(tempDiv.firstChild, productFormButtons.nextSibling);
         }
 
@@ -177,24 +185,26 @@
   ">
     <div style="
       background: {{ widget_settings.colors.background }};
-      border-radius: 16px;
-      padding: 32px;
-      min-width: 320px;
+      border-radius: 22px;
+      padding: 40px 32px;
+      min-width: 340px;
       max-width: 90vw;
       margin: auto;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      box-shadow: 0 10px 40px rgba(50, 198, 206, 0.22), 0 2px 8px rgba(0,0,0,0.10);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 28px;
       position: relative;
+      transition: box-shadow 0.2s;
     ">
-    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 16px;
+        font-size: 20px;
+        margin-bottom: 18px;
         text-align: center;
+        font-weight: 500;
       ">{{ message }}</p>
       {% render 'share-cart-buttons',
         button_style: widget_settings.button_style,
@@ -205,12 +215,14 @@
       %}
       <p style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 12px;
+        font-size: 17px;
+        margin-bottom: 10px;
         text-align: center;
-        margin-top: 8px;
+        margin-top: 16px;
         cursor: pointer;
-      " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks! I prefer not to get a discount</p>
+        opacity: 0.7;
+        transition: color 0.2s, opacity 0.2s;
+      " onclick="document.getElementById('share-cart-popup').style.display='none'" onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
 {% endif %}
@@ -228,24 +240,26 @@
   ">
     <div style="
       background: {{ widget_settings.colors.background }};
-      border-radius: 16px;
-      padding: 32px;
-      min-width: 320px;
+      border-radius: 22px;
+      padding: 40px 32px;
+      min-width: 340px;
       max-width: 90vw;
       margin: auto;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      box-shadow: 0 10px 40px rgba(50, 198, 206, 0.22), 0 2px 8px rgba(0,0,0,0.10);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 28px;
       position: relative;
+      transition: box-shadow 0.2s;
     ">
-    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 16px;
+        font-size: 20px;
+        margin-bottom: 18px;
         text-align: center;
+        font-weight: 500;
       ">{{ message }}</p>
       {% render 'share-cart-buttons',
         button_style: widget_settings.button_style,
@@ -256,12 +270,14 @@
       %}
       <p style="
         color: {{ widget_settings.colors.text }};
-        font-size: 18px;
-        margin-bottom: 12px;
+        font-size: 17px;
+        margin-bottom: 10px;
         text-align: center;
-        margin-top: 8px;
+        margin-top: 16px;
         cursor: pointer;
-      " onclick="document.getElementById('share-cart-popup').style.display='none'">No thanks! I prefer not to get a discount</p>
+        opacity: 0.7;
+        transition: color 0.2s, opacity 0.2s;
+      " onclick="document.getElementById('share-cart-popup').style.display='none'" onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
 {% endif %}
@@ -538,6 +554,34 @@
     link.addEventListener('click', function() {
       handleShareButtonClick('email');
     });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Hide widget on "No thanks" click (cart page)
+    var cartWidget = document.getElementById('share-cart-cart-widget');
+    if (cartWidget) {
+      var noThanks = cartWidget.querySelector('.share-cart-no-thanks');
+      if (noThanks) {
+        noThanks.addEventListener('click', function() {
+          cartWidget.style.display = 'none';
+        });
+      }
+    }
+
+    // Hide widget on "No thanks" click (product page)
+    var observer = new MutationObserver(function() {
+      var productWidget = document.getElementById('share-cart-product-widget');
+      if (productWidget) {
+        var noThanks = productWidget.querySelector('.share-cart-no-thanks');
+        if (noThanks && !noThanks.dataset.listenerAdded) {
+          noThanks.addEventListener('click', function() {
+            productWidget.style.display = 'none';
+          });
+          noThanks.dataset.listenerAdded = "true";
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   });
 </script>
 
