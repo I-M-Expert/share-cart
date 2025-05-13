@@ -114,3 +114,41 @@ export const orderCreatedHandler = async (topic, shop, webhookRequestBody) => {
     console.error('Error processing order webhook:', error);
   }
 };
+
+export const orderFulfilledHandler = async (topic, shop, webhookRequestBody) => {
+  try {
+    const order = JSON.parse(webhookRequestBody);
+    console.log(`Processing fulfillment for order ${order.id} for shop ${shop}`);
+
+    if (order.discount_codes && order.discount_codes.length > 0) {
+      for (const discountCode of order.discount_codes) {
+        const coupon = await Coupon.findOne({
+          shop,
+          code: discountCode.code.toUpperCase(),
+        });
+
+        if (coupon) {
+          // Only increment on fulfillment
+          await Coupon.findByIdAndUpdate(coupon._id, {
+            $inc: { convertedCount: 1 },
+            $push: {
+              usedBy: {
+                customerId: order.customer ? order.customer.id : null,
+                customerEmail: order.customer ? order.customer.email : null,
+                customerName: order.customer
+                  ? `${order.customer.first_name} ${order.customer.last_name}`.trim()
+                  : "Guest",
+                orderValue: order.total_price,
+                usedAt: new Date(),
+                fulfilled: true,
+              },
+            },
+          });
+          console.log(`Incremented convertedCount for coupon ${coupon.code} on fulfillment`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error processing order fulfillment webhook:", error);
+  }
+};

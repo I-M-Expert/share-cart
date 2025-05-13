@@ -295,21 +295,75 @@
     var addToCartBtn = document.querySelector('form[action*="/cart/add"] [type="submit"], button[name="add"]');
     if (addToCartBtn) {
       addToCartBtn.addEventListener('click', function(e) {
-        setTimeout(function() {
-          popup.style.display = 'flex';
-          setShareLinks(); // Update links when showing popup
-        }, 500); // delay to allow cart logic
+        // Prevent default to avoid redirecting to cart page
+        e.preventDefault();
+
+        // Find the form and submit via AJAX to add to cart without redirect
+        var form = addToCartBtn.closest('form');
+        if (form) {
+          var formData = new FormData(form);
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              'Accept': 'application/json'
+            }
+          })
+          .then(function(response) {
+            // Optionally, update cart UI or open cart drawer here
+            // Try to open Shopify's cart drawer if available
+            if (window.Shopify && Shopify.theme && typeof Shopify.theme.cartDrawer === 'function') {
+              Shopify.theme.cartDrawer('open');
+            } else if (window.CartDrawer && typeof window.CartDrawer.open === 'function') {
+              window.CartDrawer.open();
+            } else {
+              // Fallback: try to trigger click on cart icon/drawer button
+              var drawerBtn = document.querySelector('[aria-controls="CartDrawer"], .cart-drawer-open, .js-drawer-open-cart');
+              if (drawerBtn) drawerBtn.click();
+            }
+            // Show the popup after a short delay
+            setTimeout(function() {
+              popup.style.display = 'flex';
+              setShareLinks();
+            }, 500);
+          });
+        }
       });
     }
 
-    // Example: Show on checkout button click
+    // --- Checkout popup logic ---
+    // Only show popup and prevent navigation if "checkout" is enabled
+    var displayStr = "{{ display_str }}";
+    var isCheckoutPopupEnabled = displayStr.includes('checkout');
+
+    // Cart page checkout button
     var checkoutBtn = document.querySelector('form[action*="/cart"] [type="submit"], button[name="checkout"]');
-    if (checkoutBtn) {
+    if (checkoutBtn && isCheckoutPopupEnabled) {
       checkoutBtn.addEventListener('click', function(e) {
-        setTimeout(function() {
-          popup.style.display = 'flex';
-          setShareLinks(); // Update links when showing popup
-        }, 500);
+        // Prevent navigation and show popup
+        e.preventDefault();
+        popup.style.display = 'flex';
+        setShareLinks();
+      });
+    }
+
+    // Cart drawer checkout button (common selectors for Shopify themes)
+    if (isCheckoutPopupEnabled) {
+      // Try to find checkout buttons in common cart drawer containers
+      var cartDrawerSelectors = [
+        '.cart-drawer__footer [name="checkout"]',
+        '.cart-drawer [type="submit"][name="checkout"]',
+        '.drawer__footer [name="checkout"]',
+        '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
+      ];
+      cartDrawerSelectors.forEach(function(sel) {
+        document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
+          drawerCheckoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            popup.style.display = 'flex';
+            setShareLinks();
+          });
+        });
       });
     }
   });
@@ -421,6 +475,10 @@
     // Remove any existing popup
     var existing = document.getElementById('share-success-popup');
     if (existing) existing.remove();
+
+    // Remove the widget modal if present
+    var widgetPopup = document.getElementById('share-cart-popup');
+    if (widgetPopup) widgetPopup.style.display = 'none';
 
     var popup = document.createElement('div');
     popup.id = 'share-success-popup';
