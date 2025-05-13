@@ -146,30 +146,23 @@ export const createCoupon = async (req, res) => {
 
       // Build customerGets based on discountType
       let customerGets;
-      if (discountType === "percentage") {
-        customerGets = {
-          value: { percentage: Number(normalizedPercentage) },
-          items: {
-            all: false,
-            ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
-          },
+      let items;
+      if (productIds.length || collectionIds.length) {
+        items = {
+          all: false,
+          ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+          ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
         };
-      } else if (discountType === "fixed") {
-        customerGets = {
-          value: { 
-            discountAmount: { 
-              amount: Number(fixedAmount),
-              appliesOnEachItem: false  // Add this line - false means apply once per order
-            } 
-          },
-          items: {
-            all: false,
-            ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-            ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
-          },
-        };
+      } else {
+        items = { all: true }; // fallback, but you already block this case above
       }
+
+      customerGets = {
+        value: discountType === "percentage"
+          ? { percentage: Number(normalizedPercentage) }
+          : { discountAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+        items,
+      };
 
       // Build minimumRequirement if provided
       let minimumRequirement;
@@ -442,30 +435,23 @@ export const editCoupon = async (req, res) => {
           couponUpdates.senderMinPurchaseAmount : coupon.senderMinPurchaseAmount;
 
         let customerGets;
-        if (updatedDiscountType === "percentage") {
-          customerGets = {
-            value: { percentage: Number(updatedPercentageValue) },
-            items: {
-              all: false,
-              ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
-              ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
-            },
+        let items;
+        if (updatedProductIds.length || updatedCollectionIds.length) {
+          items = {
+            all: false,
+            ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
+            ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
           };
-        } else if (updatedDiscountType === "fixed") {
-          customerGets = {
-            value: { 
-              discountAmount: { 
-                amount: Number(updatedFixedAmount),
-                appliesOnEachItem: false  // Add this line - false means apply once per order
-              } 
-            },
-            items: {
-              all: false,
-              ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
-              ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
-            },
-          };
+        } else {
+          items = { all: true }; // fallback, but you already block this case above
         }
+
+        customerGets = {
+          value: updatedDiscountType === "percentage"
+            ? { percentage: Number(updatedPercentageValue) }
+            : { discountAmount: { amount: Number(updatedFixedAmount), appliesOnEachItem: false } },
+          items,
+        };
 
         // Build minimumRequirement if provided
         let minimumRequirement;
