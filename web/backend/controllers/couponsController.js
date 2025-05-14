@@ -442,15 +442,39 @@ export const editCoupon = async (req, res) => {
             }
           }
         `;
-        const fetchData = await client.query({
-          data: {
-            query: fetchQuery,
-            variables: { id: coupon.shopifyDiscountId },
-          },
-        });
+        let fetchData;
+        try {
+          fetchData = await client.query({
+            data: {
+              query: fetchQuery,
+              variables: { id: coupon.shopifyDiscountId },
+            },
+          });
+          console.log("Shopify fetchData:", JSON.stringify(fetchData.body, null, 2));
+        } catch (fetchErr) {
+          console.error("Error fetching current discount from Shopify:", fetchErr);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to fetch current discount from Shopify",
+            error: fetchErr.message,
+          });
+        }
+
+        // Defensive: check structure before extracting items
+        let items;
+        try {
+          items = fetchData.body.data.codeDiscountNode.codeDiscount.customerGets.items;
+          console.log("Fetched items from Shopify:", items);
+        } catch (extractErr) {
+          console.error("Error extracting items from Shopify response:", extractErr, fetchData.body);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to extract items from Shopify response",
+            error: extractErr.message,
+          });
+        }
 
         // Extract current product and collection IDs from Shopify response
-        const items = fetchData.body.data.codeDiscountNode.codeDiscount.customerGets.items;
         let currentProductIds = [];
         let currentCollectionIds = [];
         if (items) {
