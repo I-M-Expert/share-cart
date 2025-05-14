@@ -510,6 +510,22 @@ export const editCoupon = async (req, res) => {
           },
         };
 
+        console.log("Updating Shopify Discount with:", {
+          id: coupon.shopifyDiscountId,
+          basicCodeDiscount: {
+            title: updatedName,
+            code: coupon.code,
+            startsAt: coupon.createdAt.toISOString(),
+            endsAt: updatedEndDate
+              ? new Date(updatedEndDate).toISOString()
+              : undefined,
+            customerGets,
+            customerSelection: { all: true },
+            appliesOncePerCustomer: true,
+            ...(minimumRequirement ? { minimumRequirement } : {}),
+          },
+        });
+
         const data = await client.query({
           data: {
             query: mutation,
