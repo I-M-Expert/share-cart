@@ -417,6 +417,59 @@ export const editCoupon = async (req, res) => {
       try {
         const client = new shopify.api.clients.Graphql({ session });
         
+        // Fetch current discount's products and collections from Shopify
+        const fetchQuery = `
+          query DiscountCodeNode($id: ID!) {
+            codeDiscountNode(id: $id) {
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  customerGets {
+                    items {
+                      ... on DiscountProducts {
+                        products {
+                          id
+                        }
+                      }
+                      ... on DiscountCollections {
+                        collections {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const fetchData = await client.query({
+          data: {
+            query: fetchQuery,
+            variables: { id: coupon.shopifyDiscountId },
+          },
+        });
+
+        // Extract current product and collection IDs from Shopify response
+        const items = fetchData.body.data.codeDiscountNode.codeDiscount.customerGets.items;
+        let currentProductIds = [];
+        let currentCollectionIds = [];
+        if (items) {
+          if (items.products && items.products.length) {
+            currentProductIds = items.products.map(p => p.id.replace(/^gid:\/\/shopify\/Product\//, ""));
+          }
+          if (items.collections && items.collections.length) {
+            currentCollectionIds = items.collections.map(c => c.id.replace(/^gid:\/\/shopify\/Collection\//, ""));
+          }
+        }
+
+        // Calculate products/collections to add/remove
+        const updatedProductIds = couponUpdates.productIds || coupon.productIds || [];
+        const updatedCollectionIds = couponUpdates.collectionIds || coupon.collectionIds || [];
+        const productsToAdd = updatedProductIds.filter(id => !currentProductIds.includes(id));
+        const productsToRemove = currentProductIds.filter(id => !updatedProductIds.includes(id));
+        const collectionsToAdd = updatedCollectionIds.filter(id => !currentCollectionIds.includes(id));
+        const collectionsToRemove = currentCollectionIds.filter(id => !updatedCollectionIds.includes(id));
+
         // Use couponUpdates or fall back to existing values
         const updatedName = couponUpdates.name || coupon.name;
         const updatedDiscountType = couponUpdates.discountType || coupon.discountType;
@@ -425,8 +478,6 @@ export const editCoupon = async (req, res) => {
         const updatedFixedAmount = updatedDiscountType === "fixed" ? 
           (couponUpdates.fixedAmount || coupon.fixedAmount) : undefined;
         const updatedEndDate = couponUpdates.endDate || coupon.endDate;
-        const updatedProductIds = couponUpdates.productIds || coupon.productIds || [];
-        const updatedCollectionIds = couponUpdates.collectionIds || coupon.collectionIds || [];
         const updatedSenderRequireMinPurchase = 
           couponUpdates.senderRequireMinPurchase !== undefined ? 
           couponUpdates.senderRequireMinPurchase : coupon.senderRequireMinPurchase;
@@ -435,22 +486,22 @@ export const editCoupon = async (req, res) => {
           couponUpdates.senderMinPurchaseAmount : coupon.senderMinPurchaseAmount;
 
         let customerGets;
-        let items;
+        let itemsInput;
         if (updatedProductIds.length || updatedCollectionIds.length) {
-          items = {
+          itemsInput = {
             all: false,
-            ...(updatedProductIds.length ? { products: { productsToAdd: updatedProductIds } } : {}),
-            ...(updatedCollectionIds.length ? { collections: { collectionsToAdd: updatedCollectionIds } } : {}),
+            ...(updatedProductIds.length ? { products: { productsToAdd, productsToRemove } } : {}),
+            ...(updatedCollectionIds.length ? { collections: { collectionsToAdd, collectionsToRemove } } : {}),
           };
         } else {
-          items = { all: true }; // fallback, but you already block this case above
+          itemsInput = { all: true };
         }
 
         customerGets = {
           value: updatedDiscountType === "percentage"
             ? { percentage: Number(updatedPercentageValue) }
             : { discountAmount: { amount: Number(updatedFixedAmount), appliesOnEachItem: false } },
-          items,
+          items: itemsInput,
         };
 
         // Build minimumRequirement if provided
@@ -503,7 +554,7 @@ export const editCoupon = async (req, res) => {
             endsAt: updatedEndDate
               ? new Date(updatedEndDate).toISOString()
               : undefined,
-            customerGets,
+            customerGets, // <-- productIds and collectionIds are included here
             customerSelection: { all: true },
             appliesOncePerCustomer: true,
             ...(minimumRequirement ? { minimumRequirement } : {}),
