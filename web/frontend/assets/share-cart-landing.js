@@ -55,6 +55,18 @@
     }
   }
 
+  async function recordCouponClick(discount) {
+    if (!discount) return;
+    try {
+      await fetch('https://share-cart.onrender.com/api/coupons/' + encodeURIComponent(discount) + '/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      console.error('Error recording coupon click:', err);
+    }
+  }
+
   async function restoreCart() {
     const cartData = getCartData();
     const params = new URLSearchParams(window.location.search);
@@ -65,6 +77,10 @@
       return;
     }
     if (appDiv) appDiv.innerText = "Restoring your cart...";
+
+    // Record the click as soon as the page loads
+    await recordCouponClick(discount || cartData.discount);
+
     await clearCart();
     await addItems(cartData.items);
     await applyDiscount(discount || cartData.discount);

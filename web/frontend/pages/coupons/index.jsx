@@ -253,8 +253,8 @@ export default function Coupons() {
       coupon.name,
       formatDate(coupon.createdAt),
       coupon.sentCount || "0",
-      coupon.convertedCount || "0",
-      coupon.usedBy || "No users yet",
+      coupon.clicks || "0",         // <-- New Clicks column
+      coupon.convertedCount || "0", // <-- Converted column
       codeWithCopy,
       statusBadge,
       actionContent,
@@ -409,8 +409,8 @@ export default function Coupons() {
             "text",    // Coupon Name
             "text",    // Date Created
             "numeric", // Sent
+            "numeric", // Clicks
             "numeric", // Converted
-            "text",    // Who Used
             "text",    // Code
             "text",    // Status
             "text",    // Action
@@ -419,8 +419,8 @@ export default function Coupons() {
             "Coupon Name",
             "Date Created",
             "Sent",
+            "Clicks",
             "Converted",
-            "Who Used",
             "Code",
             "Status",
             "Action",

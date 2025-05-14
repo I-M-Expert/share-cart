@@ -1122,3 +1122,27 @@ export const deactivateCoupon = async (req, res) => {
     });
   }
 };
+
+/**
+ * Increment clicks when recipient opens the shared link
+ */
+export const recordCouponClick = async (req, res) => {
+  try {
+    const code = req.params.code;
+    if (!code) {
+      return res.status(400).json({ success: false, message: "Coupon code required" });
+    }
+    const coupon = await Coupon.findOneAndUpdate(
+      { code },
+      { $inc: { clicks: 1 } },
+      { new: true }
+    );
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: "Coupon not found" });
+    }
+    return res.status(200).json({ success: true, clicks: coupon.clicks });
+  } catch (error) {
+    console.error("Error recording coupon click:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

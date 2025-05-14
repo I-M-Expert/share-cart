@@ -46,6 +46,7 @@ const couponSchema = mongoose.Schema({
   // Statistics
   sentCount: { type: Number, default: 0 },
   convertedCount: { type: Number, default: 0 },
+  clicks: { type: Number, default: 0 },
   usedBy: [{ 
     customerId: String,
     customerName: String,
