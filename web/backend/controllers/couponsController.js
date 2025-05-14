@@ -430,13 +430,21 @@ console.log('now editting')
                   customerGets {
                     items {
                       ... on DiscountProducts {
-                        products {
-                          id
+                        products(first: 100) {
+                          edges {
+                            node {
+                              id
+                            }
+                          }
                         }
                       }
                       ... on DiscountCollections {
-                        collections {
-                          id
+                        collections(first: 100) {
+                          edges {
+                            node {
+                              id
+                            }
+                          }
                         }
                       }
                     }
@@ -482,11 +490,15 @@ console.log('now editting')
         let currentProductIds = [];
         let currentCollectionIds = [];
         if (items) {
-          if (items.products && items.products.length) {
-            currentProductIds = items.products.map(p => p.id.replace(/^gid:\/\/shopify\/Product\//, ""));
+          if (items.products && items.products.edges && items.products.edges.length) {
+            currentProductIds = items.products.edges.map(
+              (edge) => edge.node.id.replace(/^gid:\/\/shopify\/Product\//, "")
+            );
           }
-          if (items.collections && items.collections.length) {
-            currentCollectionIds = items.collections.map(c => c.id.replace(/^gid:\/\/shopify\/Collection\//, ""));
+          if (items.collections && items.collections.edges && items.collections.edges.length) {
+            currentCollectionIds = items.collections.edges.map(
+              (edge) => edge.node.id.replace(/^gid:\/\/shopify\/Collection\//, "")
+            );
           }
         }
 
