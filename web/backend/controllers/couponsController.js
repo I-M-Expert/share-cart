@@ -562,7 +562,6 @@ console.log('now editting')
                 codeDiscount {
                   ... on DiscountCodeBasic {
                     title
-                    code
                     status
                     customerGets {
                       value {
