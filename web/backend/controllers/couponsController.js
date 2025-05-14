@@ -417,6 +417,9 @@ export const editCoupon = async (req, res) => {
       try {
         const client = new shopify.api.clients.Graphql({ session });
         
+        // Add log before fetch to confirm code path
+        console.log("About to fetch current discount from Shopify for coupon:", coupon.shopifyDiscountId);
+
         // Fetch current discount's products and collections from Shopify
         const fetchQuery = `
           query DiscountCodeNode($id: ID!) {
