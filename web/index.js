@@ -155,7 +155,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/billing", shopify.validateAuthenticatedSession(), billingRoutes);
-app.use("/api/coupons", shopify.validateAuthenticatedSession(), couponRoutes);
+app.use("/api/coupons", couponRoutes);
 app.use("/api/products", shopify.validateAuthenticatedSession(), productRoutes);
 app.use(
   "/api/collections",
