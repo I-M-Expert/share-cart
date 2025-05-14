@@ -318,6 +318,7 @@ export const createCoupon = async (req, res) => {
  * Edit an existing coupon (Standard Shopify Discount)
  */
 export const editCoupon = async (req, res) => {
+console.log('now editting')
   try {
     const session = res.locals.shopify.session;
     if (!session)
