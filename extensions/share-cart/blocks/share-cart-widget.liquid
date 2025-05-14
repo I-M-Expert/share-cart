@@ -42,7 +42,7 @@
   ">
     <div>
       <div style="display: flex; align-items: center; justify-content: center;">
-        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       </div>
       <p style="
         color: {{ widget_settings.colors.text }};
@@ -66,21 +66,49 @@
         share_message: share_message
       %}
       </div>
-      <p class="share-cart-no-thanks" style="
-        color: {{ widget_settings.colors.text }};
-        font-size: 17px;
-        margin-bottom: 10px;
-        text-align: center;
-        margin-top: 16px;
-        cursor: pointer;
-        opacity: 0.7;
-        transition: color 0.2s, opacity 0.2s;
-      " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
     </div>
   </div>
 {% endif %}
 
+{%- assign coupon_product_ids = '' -%}
+{%- for gid in widget_settings.coupon.productIds -%}
+  {%- assign id_parts = gid | split: '/' -%}
+  {%- assign id = id_parts | last -%}
+  {%- assign coupon_product_ids = coupon_product_ids | append: id | append: ',' -%}
+{%- endfor -%}
+{%- assign coupon_product_ids = coupon_product_ids | split: ',' | uniq -%}
+
+{%- assign coupon_collection_ids = widget_settings.coupon.collectionIds | map: 'last' -%}
+{%- assign show_product_widget = false -%}
+
 {%- if display_str contains 'product_page' and template == 'product' -%}
+  {%- assign product_id_str = product.id | append: '' -%}
+  <script>
+    console.log('Share Cart Debug:');
+    console.log('coupon_product_ids:', {{ coupon_product_ids | json }});
+    console.log('product_id_str:', '{{ product_id_str }}');
+    console.log('coupon_collection_ids:', {{ coupon_collection_ids | json }});
+    {% if product.collections.size > 0 %}
+      console.log('product.collections:', [
+        {% for c in product.collections %}
+          '{{ c.id }}',
+        {% endfor %}
+      ]);
+    {% endif %}
+  </script>
+  {%- if coupon_product_ids contains product_id_str -%}
+    {%- assign show_product_widget = true -%}
+  {%- elsif coupon_collection_ids and product and product.collections.size > 0 -%}
+    {%- for c in product.collections -%}
+      {%- assign collection_id_str = c.id | append: '' -%}
+      {%- if coupon_collection_ids contains collection_id_str -%}
+        {%- assign show_product_widget = true -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- if show_product_widget -%}
   <!-- Product Page Widget (below Buy It Now button, outside the form) -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -100,7 +128,7 @@
           align-items: center;
           transition: box-shadow 0.2s;
         ">
-        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 160px; height: auto; margin-bottom: 18px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
           <p style="
             color: {{ widget_settings.colors.text }};
             font-size: 20px;
@@ -125,16 +153,6 @@
               share_message: share_message
             %}
           </div>
-          <p class="share-cart-no-thanks" style="
-            color: {{ widget_settings.colors.text }};
-            font-size: 17px;
-            margin-bottom: 10px;
-            text-align: center;
-            margin-top: 16px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: color 0.2s, opacity 0.2s;
-          " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
         </div>`;
 
         var tempDiv = document.createElement('div');
@@ -198,7 +216,7 @@
       position: relative;
       transition: box-shadow 0.2s;
     ">
-    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 20px;
@@ -253,7 +271,7 @@
       position: relative;
       transition: box-shadow 0.2s;
     ">
-    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
+    <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
         font-size: 20px;
@@ -521,7 +539,7 @@
           padding: 0;
         " aria-label="Close">&times;</button>
         
-        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(1).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+        <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
         <h2 style="margin:0 0 8px 0; color: #32c6ce; font-size: 1.5em;">Share successful</h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="50px" height="50px" viewBox="0 0 24 24"><path fill="#32c6ce" fill-rule="evenodd" d="M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18m-.232-5.36l5-6l-1.536-1.28l-4.3 5.159l-2.225-2.226l-1.414 1.414l3 3l.774.774z" clip-rule="evenodd"/></svg>
         <p style="margin:0 0 8px 0; font-size: 1.1em;">A <b>${discountText} discount coupon</b> has been added to your cart.</p>

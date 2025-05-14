@@ -185,21 +185,6 @@ export default function Coupons() {
                       gap: "8px",
                     }}
                   >
-                    <IconifyIcon icon="mdi:eye-outline" />
-                    <span>View</span>
-                  </div>
-                ),
-                onAction: () => navigate(`/coupons/${coupon.id}`),
-              },
-              {
-                content: (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
                     <IconifyIcon icon="mdi:pencil-outline" />
                     <span>Edit</span>
                   </div>

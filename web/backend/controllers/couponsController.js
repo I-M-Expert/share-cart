@@ -540,15 +540,13 @@ export const editCoupon = async (req, res) => {
     Object.assign(coupon, couponUpdates);
     await coupon.save();
 
-    // If coupon is set to active, update the widget
+    // Always update widget metafield if coupon is active
     if (coupon.isActive) {
       await Widget.findOneAndUpdate(
         { shop },
         { coupon: coupon._id },
         { new: true }
       );
-      
-      // Update Shopify metafields
       await updateWidgetMetafields(shop, session);
     }
 
