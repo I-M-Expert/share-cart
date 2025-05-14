@@ -502,13 +502,17 @@ console.log('now editting')
           }
         }
 
+        // Convert plain IDs to Shopify GIDs
+        const toProductGID = (id) => `gid://shopify/Product/${id}`;
+        const toCollectionGID = (id) => `gid://shopify/Collection/${id}`;
+
         // Calculate products/collections to add/remove
         const updatedProductIds = couponUpdates.productIds || coupon.productIds || [];
         const updatedCollectionIds = couponUpdates.collectionIds || coupon.collectionIds || [];
-        const productsToAdd = updatedProductIds.filter(id => !currentProductIds.includes(id));
-        const productsToRemove = currentProductIds.filter(id => !updatedProductIds.includes(id));
-        const collectionsToAdd = updatedCollectionIds.filter(id => !currentCollectionIds.includes(id));
-        const collectionsToRemove = currentCollectionIds.filter(id => !updatedCollectionIds.includes(id));
+        const productsToAdd = updatedProductIds.filter(id => !currentProductIds.includes(id)).map(toProductGID);
+        const productsToRemove = currentProductIds.filter(id => !updatedProductIds.includes(id)).map(toProductGID);
+        const collectionsToAdd = updatedCollectionIds.filter(id => !currentCollectionIds.includes(id)).map(toCollectionGID);
+        const collectionsToRemove = currentCollectionIds.filter(id => !updatedCollectionIds.includes(id)).map(toCollectionGID);
 
         // Use couponUpdates or fall back to existing values
         const updatedName = couponUpdates.name || coupon.name;
