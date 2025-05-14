@@ -37,6 +37,9 @@ const couponSchema = mongoose.Schema({
   productIds: [{ type: String }],
   collectionIds: [{ type: String }],
   
+  // Shopify Discount ID
+  shopifyDiscountId: { type: String },
+  
   // Message customization
   customMessage: { type: String },
   
