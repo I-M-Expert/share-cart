@@ -486,7 +486,7 @@ console.log('now editting')
           });
         }
 
-        // Extract current product and collection IDs from Shopify response
+        // Extract current product and collection IDs from Shopify response as plain IDs
         let currentProductIds = [];
         let currentCollectionIds = [];
         if (items) {
@@ -502,15 +502,17 @@ console.log('now editting')
           }
         }
 
-        // Convert plain IDs to Shopify GIDs
-        const toProductGID = (id) =>
-          id.startsWith("gid://shopify/Product/") ? id : `gid://shopify/Product/${id}`;
-        const toCollectionGID = (id) =>
-          id.startsWith("gid://shopify/Collection/") ? id : `gid://shopify/Collection/${id}`;
+        // Always normalize updated IDs to plain IDs for comparison
+        const normalizeProductId = (id) => id.replace(/^gid:\/\/shopify\/Product\//, "");
+        const normalizeCollectionId = (id) => id.replace(/^gid:\/\/shopify\/Collection\//, "");
 
-        // Calculate products/collections to add/remove
-        const updatedProductIds = couponUpdates.productIds || coupon.productIds || [];
-        const updatedCollectionIds = couponUpdates.collectionIds || coupon.collectionIds || [];
+        const updatedProductIds = (couponUpdates.productIds || coupon.productIds || []).map(normalizeProductId);
+        const updatedCollectionIds = (couponUpdates.collectionIds || coupon.collectionIds || []).map(normalizeCollectionId);
+
+        // Now calculate add/remove as plain IDs, then convert to GID for Shopify
+        const toProductGID = (id) => `gid://shopify/Product/${id}`;
+        const toCollectionGID = (id) => `gid://shopify/Collection/${id}`;
+
         const productsToAdd = updatedProductIds
           .filter(id => !currentProductIds.includes(id))
           .map(toProductGID);
