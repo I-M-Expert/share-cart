@@ -91,7 +91,7 @@ app.get(
       });
 
       const getData = getResponse.json();
-      console.log("Added user to GetResponse list:", JSON.stringify(getData));
+      console.log("Added user to GetResponse list:", JSON.stringify(getResponse));
     } catch (e) {
       console.error("Failed to add user to GetResponse list:", e);
     }
@@ -152,7 +152,7 @@ app.use("/coupons", couponRoutes);
 // Global middleware to log all incoming requests
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
-  console.log("Headers:", req.headers);
+  // console.log("Headers:", req.headers);
   next();
 });
 
