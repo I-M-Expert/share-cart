@@ -75,7 +75,7 @@ app.get(
         );
         const data = await response.json();
         email = data.shop?.email || shop;
-        console.log("Ferched Shop ", data);
+        console.log("Fetched Shop ", JSON.stringify(data));
       } catch (e) {
         console.error("Failed to fetch shop email:", e);
       }
@@ -89,7 +89,7 @@ app.get(
         body: JSON.stringify({
           email: email || shop,
           name: shop,
-          campaign: { campaignId: process.env.GETRESPONSE_LIST_ID }, // List ID for "installed"
+          campaign: { campaignId: process.env.GETRESPONSE_LIST_ID }, 
         }),
       });
     } catch (e) {

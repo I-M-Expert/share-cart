@@ -84,6 +84,7 @@ export default {
 
       // --- Add this block ---
       try {
+        console.log("Shop uninstalled:", JSON.stringify(payload));
         const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
         const email = payload.shop_domain; // Or use stored email if available
 
