@@ -58,7 +58,7 @@
   async function recordCouponClick(discount) {
     if (!discount) return;
     try {
-      await fetch('https://share-cart.onrender.com/api/coupons/' + encodeURIComponent(discount) + '/click', {
+      await fetch('https://share-cart.onrender.com/coupons/' + encodeURIComponent(discount) + '/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

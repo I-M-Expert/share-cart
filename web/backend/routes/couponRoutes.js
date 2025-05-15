@@ -8,16 +8,15 @@ import {
   activateCoupon,
   recordCouponClick,
 } from "../controllers/couponsController.js";
-import shopify from '../../shopify.js';
 
 const router = express.Router();
 
-router.get('/', shopify.validateAuthenticatedSession(), getCoupons)
-router.get('/:id', shopify.validateAuthenticatedSession(), getCoupon)
-router.post('/', shopify.validateAuthenticatedSession(), createCoupon)
-router.put("/:id", shopify.validateAuthenticatedSession(), editCoupon);
-router.delete('/:id', shopify.validateAuthenticatedSession(), deleteCoupon)
-router.post('/:id/activate', shopify.validateAuthenticatedSession(), activateCoupon)
+router.get('/', getCoupons)
+router.get('/:id', getCoupon)
+router.post('/', createCoupon)
+router.put("/:id", editCoupon);
+router.delete('/:id', deleteCoupon)
+router.post('/:id/activate', activateCoupon)
 router.post('/:code/click', recordCouponClick);
 
 export default router;
