@@ -75,6 +75,7 @@ app.get(
         );
         const data = await response.json();
         email = data.shop?.email || shop;
+        console.log("Ferched Shop ", data);
       } catch (e) {
         console.error("Failed to fetch shop email:", e);
       }
