@@ -54,7 +54,6 @@ app.get(
 
     // --- Add this block ---
     try {
-      // Replace with actual GetResponse API endpoint and API key
       const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
       const shop = session.shop;
       const accessToken = session.accessToken;
@@ -77,7 +76,35 @@ app.get(
       console.log("Fetched Shop ", JSON.stringify(data));
       console.log(process.env.GETRESPONSE_LIST_ID);
 
-      const getResponse =await fetch("https://api.getresponse.com/v3/contacts", {
+      // 1. Search for the contact in the UNINSTALLED list
+      const searchRes = await fetch(
+        `https://api.getresponse.com/v3/contacts?query[email]=${encodeURIComponent(email)}&query[campaignId]=${process.env.GETRESPONSE_UNINSTALLED_LIST_ID}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": `api-key ${getResponseApiKey}`,
+          },
+        }
+      );
+      const searchData = await searchRes.json();
+
+      // 2. If found, remove from uninstalled list
+      if (Array.isArray(searchData) && searchData.length > 0) {
+        for (const contact of searchData) {
+          await fetch(`https://api.getresponse.com/v3/contacts/${contact.contactId}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": `api-key ${getResponseApiKey}`,
+            },
+          });
+          console.log(`Removed ${email} from uninstalled list`);
+        }
+      }
+
+      // 3. Add to main list
+      await fetch("https://api.getresponse.com/v3/contacts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,8 +117,6 @@ app.get(
         }),
       });
 
-      const getData = await getResponse.json();
-      console.log("Added user to GetResponse list:", JSON.stringify(getData));
     } catch (e) {
       console.error("Failed to add user to GetResponse list:", e);
     }

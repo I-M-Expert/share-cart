@@ -76,20 +76,32 @@ export default {
     callbackUrl: "/api/webhooks",
     callback: async (topic, shop, body, webhookId) => {
       const payload = JSON.parse(body);
-      // Payload has the following shape:
-      // {
-      //   "shop_id": 954889,
-      //   "shop_domain": "{shop}.myshopify.com"
-      // }
-
-      // --- Add this block ---
       try {
         console.log("Shop uninstalled:", JSON.stringify(payload));
         const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
-        const email = payload.shop_domain; // Or use stored email if available
 
-        // Remove from "installed" list (optional: use GetResponse API to search and remove)
-        // Add to "uninstalled" list
+        // Fetch the shop's email using Shopify API
+        // You need to retrieve the session/accessToken for this shop
+        // If you store sessions, load it here. Example:
+        const session = await shopify.config.sessionStorage.loadSessionByShop(shop);
+        let email = shop; // fallback
+
+        if (session && session.accessToken) {
+          const response = await fetch(
+            `https://${shop}/admin/api/2023-10/shop.json`,
+            {
+              method: "GET",
+              headers: {
+                "X-Shopify-Access-Token": session.accessToken,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const data = await response.json();
+          email = data.shop?.email || shop;
+        }
+
+        // Add to "uninstalled" list in GetResponse
         await fetch("https://api.getresponse.com/v3/contacts", {
           method: "POST",
           headers: {
@@ -105,7 +117,6 @@ export default {
       } catch (e) {
         console.error("Failed to update GetResponse list on uninstall:", e);
       }
-      // --- End block ---
     },
   },
 };
