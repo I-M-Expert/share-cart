@@ -79,6 +79,10 @@
     if (appDiv) appDiv.innerText = "Restoring your cart...";
 
     // Record the click as soon as the page loads
+
+
+    console.log('discount', discount);
+    console.log('cartData.discount', cartData.discount);
     await recordCouponClick(discount || cartData.discount);
 
     await clearCart();
