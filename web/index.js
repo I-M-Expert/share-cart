@@ -72,9 +72,10 @@ app.get(
         }
       );
       const data = await response.json();
-      email = data.shop?.email || shop;
+      email = data.shop?.email;
 
       console.log("Fetched Shop ", JSON.stringify(data));
+      console.log(process.env.GETRESPONSE_LIST_ID);
 
       await fetch("https://api.getresponse.com/v3/contacts", {
         method: "POST",
@@ -83,11 +84,13 @@ app.get(
           "X-Auth-Token": `api-key ${getResponseApiKey}`,
         },
         body: JSON.stringify({
-          email: email || shop,
+          email: email,
           name: data?.shop?.name,
           campaign: { campaignId: process.env.GETRESPONSE_LIST_ID },
         }),
       });
+
+      console.log("Added user to GetResponse list:", email);
     } catch (e) {
       console.error("Failed to add user to GetResponse list:", e);
     }
