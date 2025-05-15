@@ -81,8 +81,6 @@ export default {
         const getResponseApiKey = process.env.GETRESPONSE_API_KEY;
 
         // Fetch the shop's email using Shopify API
-        // You need to retrieve the session/accessToken for this shop
-        // If you store sessions, load it here. Example:
         const session = await shopify.config.sessionStorage.loadSessionByShop(shop);
         let email = shop; // fallback
 
@@ -101,7 +99,33 @@ export default {
           email = data.shop?.email || shop;
         }
 
-        // Add to "uninstalled" list in GetResponse
+        // 1. Remove from main GetResponse list if present
+        const searchRes = await fetch(
+          `https://api.getresponse.com/v3/contacts?query[email]=${encodeURIComponent(email)}&query[campaignId]=${process.env.GETRESPONSE_LIST_ID}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": `api-key ${getResponseApiKey}`,
+            },
+          }
+        );
+        const searchData = await searchRes.json();
+
+        if (Array.isArray(searchData) && searchData.length > 0) {
+          for (const contact of searchData) {
+            await fetch(`https://api.getresponse.com/v3/contacts/${contact.contactId}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Auth-Token": `api-key ${getResponseApiKey}`,
+              },
+            });
+            console.log(`Removed ${email} from main GetResponse list`);
+          }
+        }
+
+        // 2. Add to "uninstalled" list in GetResponse
         await fetch("https://api.getresponse.com/v3/contacts", {
           method: "POST",
           headers: {
@@ -114,6 +138,7 @@ export default {
             campaign: { campaignId: process.env.GETRESPONSE_UNINSTALLED_LIST_ID },
           }),
         });
+        console.log(`Added ${email} to uninstalled list`);
       } catch (e) {
         console.error("Failed to update GetResponse list on uninstall:", e);
       }
