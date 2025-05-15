@@ -77,7 +77,6 @@ export const recordCouponUsage = async (req, res) => {
         
         // Update coupon converted count
         await Coupon.findByIdAndUpdate(couponId, { 
-          $inc: { convertedCount: 1 },
           $push: { 
             usedBy: { 
               customerId, 
