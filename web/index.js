@@ -77,7 +77,7 @@ app.get(
       console.log("Fetched Shop ", JSON.stringify(data));
       console.log(process.env.GETRESPONSE_LIST_ID);
 
-      await fetch("https://api.getresponse.com/v3/contacts", {
+      const getResponse =await fetch("https://api.getresponse.com/v3/contacts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +90,8 @@ app.get(
         }),
       });
 
-      console.log("Added user to GetResponse list:", email);
+      const getData = getResponse.json();
+      console.log("Added user to GetResponse list:", JSON.stringify(getData));
     } catch (e) {
       console.error("Failed to add user to GetResponse list:", e);
     }
