@@ -234,7 +234,7 @@
         coupon: widget_settings.coupon,
         share_message: share_message
       %}
-      <p style="
+      <p class="share-cart-no-thanks" style="
         color: {{ widget_settings.colors.text }};
         font-size: 17px;
         margin-bottom: 10px;
@@ -243,7 +243,9 @@
         cursor: pointer;
         opacity: 0.7;
         transition: color 0.2s, opacity 0.2s;
-      " onclick="document.getElementById('share-cart-popup').style.display='none'" onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
+      " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">
+        No thanks! I prefer not to get a discount
+      </p>
     </div>
   </div>
 {% endif %}
@@ -290,7 +292,7 @@
         coupon: widget_settings.coupon,
         share_message: share_message
       %}
-      <p style="
+      <p class="share-cart-no-thanks" style="
         color: {{ widget_settings.colors.text }};
         font-size: 17px;
         margin-bottom: 10px;
@@ -299,7 +301,9 @@
         cursor: pointer;
         opacity: 0.7;
         transition: color 0.2s, opacity 0.2s;
-      " onclick="document.getElementById('share-cart-popup').style.display='none'" onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">No thanks! I prefer not to get a discount</p>
+      " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">
+        No thanks! I prefer not to get a discount
+      </p>
     </div>
   </div>
 {% endif %}
@@ -663,6 +667,47 @@
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Hide widget on "No thanks" click (cart page, product page, popups)
+    document.querySelectorAll('.share-cart-no-thanks').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        // Find which popup/widget is visible
+        var cartWidget = document.getElementById('share-cart-cart-widget');
+        var productWidget = document.getElementById('share-cart-product-widget');
+        var popup = document.getElementById('share-cart-popup');
+
+        // If inside a popup, close and continue flow
+        if (popup && popup.style.display === 'flex') {
+          popup.style.display = 'none';
+          // If on cart page (checkout popup), continue to checkout
+          {% if display_str contains 'checkout' and template == 'cart' %}
+            window.location.href = '/checkout';
+          {% elsif display_str contains 'add_to_cart' and template == 'product' %}
+            // If on product page (add-to-cart popup), go to cart
+            window.location.href = '/cart';
+          {% endif %}
+          return;
+        }
+
+        // If cart widget is visible, hide and continue to checkout
+        if (cartWidget && cartWidget.style.display !== 'none') {
+          cartWidget.style.display = 'none';
+          window.location.href = '/checkout';
+          return;
+        }
+
+        // If product widget is visible, hide and go to cart
+        if (productWidget && productWidget.style.display !== 'none') {
+          productWidget.style.display = 'none';
+          window.location.href = '/cart';
+          return;
+        }
+      });
+    });
+
+    // ...existing MutationObserver for product widget...
   });
 </script>
 
