@@ -681,13 +681,14 @@
         // If inside a popup, close and continue flow
         if (popup && popup.style.display === 'flex') {
           popup.style.display = 'none';
-          // If on cart page (checkout popup), continue to checkout
-          {% if display_str contains 'checkout' and template == 'cart' %}
-            window.location.href = '/checkout';
-          {% elsif display_str contains 'add_to_cart' and template == 'product' %}
-            // If on product page (add-to-cart popup), go to cart
-            window.location.href = '/cart';
-          {% endif %}
+          // Redirect after popup is hidden
+          setTimeout(function() {
+            {% if display_str contains 'checkout' and template == 'cart' %}
+              window.location.href = '/checkout';
+            {% elsif display_str contains 'add_to_cart' and template == 'product' %}
+              window.location.href = '/cart';
+            {% endif %}
+          }, 100);
           return;
         }
 
