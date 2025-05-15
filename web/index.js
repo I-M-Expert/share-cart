@@ -90,8 +90,8 @@ app.get(
         }),
       });
 
-      const getData = getResponse.json();
-      console.log("Added user to GetResponse list:", JSON.stringify(getResponse));
+      const getData = await getResponse.json();
+      console.log("Added user to GetResponse list:", JSON.stringify(getData));
     } catch (e) {
       console.error("Failed to add user to GetResponse list:", e);
     }
