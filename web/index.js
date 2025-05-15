@@ -100,7 +100,7 @@ app.get(
 
 // Merge webhook handlers
 const webhookHandlers = {
-  ...PrivacyWebhookHandlers,
+  ...PrivacyWebhoReceivokHandlers,
   ...OrderWebhookHandlers,
 };
 
