@@ -29,6 +29,7 @@ export const getCoupons = async (req, res) => {
         endDate: coupon.endDate,
         sentCount: coupon.sentCount,
         convertedCount: coupon.convertedCount,
+        clicks: coupon.clicks, // <-- Add this line
         usedBy: coupon.usedBy.map((user) => user.customerName).join(", "),
         isActive: coupon.isActive,
       })),
