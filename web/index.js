@@ -7,16 +7,16 @@ import crypto from "crypto";
 
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
-import PrivacyWebhookHandlers from "./privacy.js";
+import PrivacyWebhoReceivokHandlers from "./privacy.js";
 import OrderWebhookHandlers from "./orders-webhooks.js"; // Add this line
 import billingRoutes from "./backend/routes/billingRoutes.js";
 import couponRoutes from "./backend/routes/couponRoutes.js";
 import productRoutes from "./backend/routes/productRoutes.js";
 import collectionRoutes from "./backend/routes/collectionRoutes.js";
 import widgetRoutes from "./backend/routes/widgetRoutes.js";
-import analyticsRoutes from './backend/routes/analyticsRoutes.js';
+import analyticsRoutes from "./backend/routes/analyticsRoutes.js";
 import { registerWebhooks } from "./helpers/webhookRegistration.js";
-import cors from "cors"; 
+import cors from "cors";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -43,8 +43,6 @@ app.use(
   })
 );
 
-
-
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
@@ -62,23 +60,21 @@ app.get(
       const accessToken = session.accessToken;
 
       let email = shop; // fallback
-      try {
-        const response = await fetch(
-          `https://${shop}/admin/api/2025-04/shop.json`,
-          {
-            method: "GET",
-            headers: {
-              "X-Shopify-Access-Token": accessToken,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const data = await response.json();
-        email = data.shop?.email || shop;
-        console.log("Fetched Shop ", JSON.stringify(data));
-      } catch (e) {
-        console.error("Failed to fetch shop email:", e);
-      }
+
+      const response = await fetch(
+        `https://${shop}/admin/api/2025-04/shop.json`,
+        {
+          method: "GET",
+          headers: {
+            "X-Shopify-Access-Token": accessToken,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      email = data.shop?.email || shop;
+
+      console.log("Fetched Shop ", JSON.stringify(data));
 
       await fetch("https://api.getresponse.com/v3/contacts", {
         method: "POST",
@@ -88,8 +84,8 @@ app.get(
         },
         body: JSON.stringify({
           email: email || shop,
-          name: shop,
-          campaign: { campaignId: process.env.GETRESPONSE_LIST_ID }, 
+          name: data?.shop?.name,
+          campaign: { campaignId: process.env.GETRESPONSE_LIST_ID },
         }),
       });
     } catch (e) {
@@ -105,7 +101,7 @@ app.get(
 // Merge webhook handlers
 const webhookHandlers = {
   ...PrivacyWebhookHandlers,
-  ...OrderWebhookHandlers
+  ...OrderWebhookHandlers,
 };
 
 // Then update your webhook processing:
@@ -166,11 +162,9 @@ app.use(
 );
 app.use("/api/widgets", shopify.validateAuthenticatedSession(), widgetRoutes);
 
-
 // --- Proxy endpoint for Shopify App Proxy: /tools/share-cart ---
 app.use("/tools/share-cart", async (req, res) => {
-
-   console.log("Proxy hit:", req.url, req.headers);
+  console.log("Proxy hit:", req.url, req.headers);
 
   // 1. Extract query parameters
   const query = req.query;
@@ -179,8 +173,11 @@ app.use("/tools/share-cart", async (req, res) => {
   // 2. Verify Shopify proxy signature
   const sortedParams = Object.keys(params)
     .sort()
-    .map((key) =>
-      `${key}=${Array.isArray(params[key]) ? params[key].join(",") : params[key]}`
+    .map(
+      (key) =>
+        `${key}=${
+          Array.isArray(params[key]) ? params[key].join(",") : params[key]
+        }`
     )
     .join("");
 
