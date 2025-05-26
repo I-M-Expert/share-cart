@@ -363,36 +363,63 @@
     var isCheckoutPopupEnabled = displayStr.includes('checkout');
 
     // Cart page checkout button
-    var checkoutBtn = document.querySelector('form[action*="/cart"] [type="submit"], button[name="checkout"]');
-    if (checkoutBtn && isCheckoutPopupEnabled) {
-      checkoutBtn.addEventListener('click', function(e) {
-        // Prevent navigation and show popup
-        e.preventDefault();
-        popup.style.display = 'flex';
-        setShareLinks();
-      });
-    }
+    if (isCheckoutPopupEnabled) {
+  // Attach to all possible checkout buttons on cart page
+  var checkoutBtns = document.querySelectorAll(
+    'form[action*="/cart"] [type="submit"], button[name="checkout"], [href="/checkout"], .cart__checkout, .mini-cart__checkout'
+  );
+  checkoutBtns.forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      popup.style.display = 'flex';
+      setShareLinks();
+    });
+  });
+}
 
     // Cart drawer checkout button (common selectors for Shopify themes)
     if (isCheckoutPopupEnabled) {
-      // Try to find checkout buttons in common cart drawer containers
-      var cartDrawerSelectors = [
-        '.cart-drawer__footer [name="checkout"]',
-        '.cart-drawer [type="submit"][name="checkout"]',
-        '.drawer__footer [name="checkout"]',
-        '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
-      ];
-      cartDrawerSelectors.forEach(function(sel) {
-        document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
+  // Try to find checkout buttons in common cart drawer containers
+  var cartDrawerSelectors = [
+    '.cart-drawer__footer [name="checkout"]',
+    '.cart-drawer [type="submit"][name="checkout"]',
+    '.drawer__footer [name="checkout"]',
+    '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
+  ];
+
+  function attachDrawerCheckoutListeners() {
+    cartDrawerSelectors.forEach(function(sel) {
+      document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
+        // Prevent duplicate listeners
+               
+        if (!drawerCheckoutBtn.dataset.shareCartListener) {
           drawerCheckoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            popup.style.display = 'flex';
-            setShareLinks();
+            var popup = document.getElementById('share-cart-popup');
+            if (popup) {
+              popup.style.display = 'flex';
+              setShareLinks();
+            } else {
+              // fallback: proceed to checkout if popup not present
+              window.location.href = '/checkout';
+            }
           });
-        });
+          drawerCheckoutBtn.dataset.shareCartListener = "true";
+        }
+        
       });
-    }
+    });
+  }
+
+  // Attach listeners initially
+  attachDrawerCheckoutListeners();
+
+  // Observe for dynamically added checkout buttons in the cart drawer
+  var drawerObserver = new MutationObserver(function() {
+    attachDrawerCheckoutListeners();
   });
+  drawerObserver.observe(document.body, { childList: true, subtree: true });
+}
 </script>
 
 <script>
@@ -447,6 +474,7 @@
           .replace('[Insert Link]', shareCartLink);
         
         console.log('Final message:', message);
+        
 
         return {
           whatsapp: "https://wa.me/?text=" + encodeURIComponent(message),
@@ -617,8 +645,8 @@
     var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue | times: 100 }}%{% endif %}`;
       // Show the share success popup
      setTimeout(function() {
-      showShareSuccessPopup(discountText); // Pass the actual discount dynamically
-    }, 10000);
+      showShareSuccessPopup(discountText); 
+    }, platform == 'messenger' ? 20000 : 10000);
 
     // Return true to allow the default link click behavior
     return true;
@@ -632,16 +660,109 @@
   });
 
   document.querySelectorAll('.share-messenger-link').forEach(link => {
-    link.addEventListener('click', function() {
-      handleShareButtonClick('messenger');
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    updateShareLinks().then(links => {
+      // Get the message from the email link (since it includes the message)
+      var messageMatch = decodeURIComponent(links.email.match(/body=([^&]*)/)[1]);
+      showMessengerShareModal(messageMatch, links.messenger.replace('https://m.me/?link=', ''));
     });
+    handleShareButtonClick('messenger');
   });
+});
 
   document.querySelectorAll('.share-email-link').forEach(link => {
     link.addEventListener('click', function() {
       handleShareButtonClick('email');
     });
   });
+
+
+
+  function showMessengerShareModal(message, shareCartLink) {
+  // Remove any existing modal
+  var existing = document.getElementById('messenger-share-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'messenger-share-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.right = '0';
+  modal.style.bottom = '0';
+  modal.style.background = 'rgba(0,0,0,0.32)';
+  modal.style.zIndex = '9999999999999';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+
+  modal.style.setProperty('position', 'fixed', 'important');
+modal.style.setProperty('z-index', '2147483647', 'important');
+
+  modal.innerHTML = `
+    <div style="
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 24px;
+      min-width: 320px;
+      max-width: 90vw;
+      border: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      text-align: center;
+    ">
+      <button id="close-messenger-share-modal" style="
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 1.8em;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+      " aria-label="Close">&times;</button>
+      <h2 style="margin:0 0 8px 0; color: #32c6ce; font-size: 1.3em;">Share this message on Messenger</h2>
+      <textarea id="messenger-share-message" style="width: 100%; min-height: 80px; font-size: 1em; margin-bottom: 12px;" readonly>${message}</textarea>
+      <button id="copy-messenger-message-btn" style="
+        background: #32c6ce;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 28px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 10px;
+      ">Copy Message</button>
+      <a href="https://m.me/?link=${encodeURIComponent(shareCartLink)}" target="_blank" style="
+        color: #32c6ce;
+        text-decoration: underline;
+        font-size: 1em;
+        margin-top: 8px;
+      ">Open Messenger</a>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById('close-messenger-share-modal').onclick = function() {
+    modal.remove();
+  };
+  document.getElementById('copy-messenger-message-btn').onclick = function() {
+    var textarea = document.getElementById('messenger-share-message');
+    textarea.select();
+    document.execCommand('copy');
+    this.textContent = 'Copied!';
+    setTimeout(() => { this.textContent = 'Copy Message'; }, 1500);
+  };
+}
+
 
   document.addEventListener('DOMContentLoaded', function() {
     // Hide widget on "No thanks" click (cart page)
