@@ -250,7 +250,7 @@
   </div>
 {% endif %}
 
-{%- if display_str contains 'checkout' and template == 'cart' -%}
+{%- if display_str contains 'checkout' -%}
   <!-- Checkout Popup (only on cart page) -->
   <div id="share-cart-popup" style="
     display: none;
@@ -309,7 +309,9 @@
 {% endif %}
 
 <script>
-  // Show popup on add to cart
+  // Add this global flag
+  window.shareCartNoThanksClicked = false;
+
   document.addEventListener('DOMContentLoaded', function() {
     // Initialize all share links on page load
     setShareLinks();
@@ -337,20 +339,22 @@
           })
           .then(function(response) {
             // Optionally, update cart UI or open cart drawer here
-            // Try to open Shopify's cart drawer if available
             if (window.Shopify && Shopify.theme && typeof Shopify.theme.cartDrawer === 'function') {
               Shopify.theme.cartDrawer('open');
             } else if (window.CartDrawer && typeof window.CartDrawer.open === 'function') {
               window.CartDrawer.open();
             } else {
-              // Fallback: try to trigger click on cart icon/drawer button
               var drawerBtn = document.querySelector('[aria-controls="CartDrawer"], .cart-drawer-open, .js-drawer-open-cart');
               if (drawerBtn) drawerBtn.click();
             }
-            // Show the popup after a short delay
+            // Show the popup after a short delay, only if "No thanks" was NOT clicked
             setTimeout(function() {
-              popup.style.display = 'flex';
-              setShareLinks();
+              if (!window.shareCartNoThanksClicked) {
+                popup.style.display = 'flex';
+                setShareLinks();
+              }
+              // Reset the flag for next add to cart
+              window.shareCartNoThanksClicked = false;
             }, 500);
           });
         }
@@ -379,47 +383,24 @@
 
     // Cart drawer checkout button (common selectors for Shopify themes)
     if (isCheckoutPopupEnabled) {
-  // Try to find checkout buttons in common cart drawer containers
-  var cartDrawerSelectors = [
-    '.cart-drawer__footer [name="checkout"]',
-    '.cart-drawer [type="submit"][name="checkout"]',
-    '.drawer__footer [name="checkout"]',
-    '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
-  ];
-
-  function attachDrawerCheckoutListeners() {
-    cartDrawerSelectors.forEach(function(sel) {
-      document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
-        // Prevent duplicate listeners
-               
-        if (!drawerCheckoutBtn.dataset.shareCartListener) {
+      // Try to find checkout buttons in common cart drawer containers
+      var cartDrawerSelectors = [
+        '.cart-drawer__footer [name="checkout"]',
+        '.cart-drawer [type="submit"][name="checkout"]',
+        '.drawer__footer [name="checkout"]',
+        '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
+      ];
+      cartDrawerSelectors.forEach(function(sel) {
+        document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
           drawerCheckoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            var popup = document.getElementById('share-cart-popup');
-            if (popup) {
-              popup.style.display = 'flex';
-              setShareLinks();
-            } else {
-              // fallback: proceed to checkout if popup not present
-              window.location.href = '/checkout';
-            }
+            popup.style.display = 'flex';
+            setShareLinks();
           });
-          drawerCheckoutBtn.dataset.shareCartListener = "true";
-        }
-        
+        });
       });
-    });
-  }
-
-  // Attach listeners initially
-  attachDrawerCheckoutListeners();
-
-  // Observe for dynamically added checkout buttons in the cart drawer
-  var drawerObserver = new MutationObserver(function() {
-    attachDrawerCheckoutListeners();
+    }
   });
-  drawerObserver.observe(document.body, { childList: true, subtree: true });
-}
 </script>
 
 <script>
@@ -796,6 +777,9 @@ modal.style.setProperty('z-index', '2147483647', 'important');
     // Hide widget on "No thanks" click (cart page, product page, popups)
     document.querySelectorAll('.share-cart-no-thanks').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
+        // Set the flag so popup doesn't show again
+        window.shareCartNoThanksClicked = true;
+
         // Find which popup/widget is visible
         var cartWidget = document.getElementById('share-cart-cart-widget');
         var productWidget = document.getElementById('share-cart-product-widget');
@@ -804,34 +788,80 @@ modal.style.setProperty('z-index', '2147483647', 'important');
         // If inside a popup, close and continue flow
         if (popup && popup.style.display === 'flex') {
           popup.style.display = 'none';
-          // Redirect after popup is hidden
           setTimeout(function() {
             {% if display_str contains 'checkout' and template == 'cart' %}
               window.location.href = '/checkout';
             {% elsif display_str contains 'add_to_cart' and template == 'product' %}
               window.location.href = '/cart';
             {% endif %}
-          }, 100);
+          }, 200); // <-- Add a short delay before navigation
           return;
         }
 
         // If cart widget is visible, hide and continue to checkout
         if (cartWidget && cartWidget.style.display !== 'none') {
           cartWidget.style.display = 'none';
-          window.location.href = '/checkout';
+          setTimeout(function() {
+            window.location.href = '/checkout';
+          }, 200); // <-- Add a short delay before navigation
           return;
         }
 
         // If product widget is visible, hide and go to cart
         if (productWidget && productWidget.style.display !== 'none') {
           productWidget.style.display = 'none';
-          window.location.href = '/cart';
+          setTimeout(function() {
+            window.location.href = '/cart';
+          }, 200); // <-- Add a short delay before navigation
           return;
         }
       });
     });
 
-    // ...existing MutationObserver for product widget...
+    // --- Ensure cart drawer checkout buttons always trigger the popup ---
+document.addEventListener('DOMContentLoaded', function() {
+  var displayStr = "{{ display_str }}";
+  var isCheckoutPopupEnabled = displayStr.includes('checkout');
+  if (!isCheckoutPopupEnabled) return;
+
+  // Function to attach listeners to cart drawer checkout buttons
+  function attachCartDrawerCheckoutListeners() {
+    var cartDrawerSelectors = [
+      '.cart-drawer__footer [name="checkout"]',
+      '.cart-drawer [type="submit"][name="checkout"]',
+      '.drawer__footer [name="checkout"]',
+      '.mini-cart__checkout, .cart__checkout, .drawer__checkout'
+    ];
+    cartDrawerSelectors.forEach(function(sel) {
+      document.querySelectorAll(sel).forEach(function(drawerCheckoutBtn) {
+        // Prevent duplicate listeners
+        if (!drawerCheckoutBtn.dataset.shareCartListener) {
+          drawerCheckoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var popup = document.getElementById('share-cart-popup');
+            if (popup) {
+              popup.style.display = 'flex';
+              setShareLinks();
+            }
+          });
+          drawerCheckoutBtn.dataset.shareCartListener = "true";
+        }
+      });
+    });
+  }
+
+  // Initial attach
+  attachCartDrawerCheckoutListeners();
+
+  // Observe cart drawer for changes
+  var cartDrawer = document.querySelector('.cart-drawer, .drawer--cart, #CartDrawer');
+  if (cartDrawer) {
+    var observer = new MutationObserver(function() {
+      attachCartDrawerCheckoutListeners();
+    });
+    observer.observe(cartDrawer, { childList: true, subtree: true });
+  }
+});
   });
 </script>
 
