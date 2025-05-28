@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Page, Text, TextField, Banner, Spinner, Layout, Select } from "@shopify/polaris";
+import { Card, Page, Text, TextField, Banner, Spinner, Layout } from "@shopify/polaris";
 import Sidebar from "../components/Sidebar";
 import { Icon } from "@iconify/react";
 import { logo } from "../assets";
@@ -18,6 +18,11 @@ const BUTTON_STYLE_OPTIONS = [
   { label: "Logo only (custom style)", value: "logo_custom" },
   { label: "Logo only (original branding)", value: "logo_original" },
 ];
+
+const shopifyApiKey = import.meta.env.VITE_SHOPIFY_API_KEY;
+const shopOrigin =
+  document.querySelector('meta[name="shopify-shop-origin"]')?.getAttribute("content") ||
+  ""; // fallback to empty string if not set
 
 // Update ShareButtons to accept coupon prop
 const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
@@ -160,8 +165,6 @@ export default function Widget() {
 
   // Add coupon state
   const [coupon, setCoupon] = useState(null);
-  const [themes, setThemes] = useState([]);
-  const [selectedTheme, setSelectedTheme] = useState("");
 
   // Get allowed number from permissions (default to 1 if not set)
   const allowedDisplayCount = subscription?.permissions?.widget || 1;
@@ -209,10 +212,6 @@ export default function Widget() {
           });
           setCoupon(data.widget.coupon || null);
         }
-        if (data.themes) {
-          setThemes(data.themes);
-          setSelectedTheme(data.themes[0]?.id || "");
-        }
       } catch (err) {
         setNotification({
           status: "critical",
@@ -224,15 +223,8 @@ export default function Widget() {
     fetchSettings();
   }, []);
 
-  // Preview handler
-  const handlePreviewTheme = () => {
-    if (!selectedTheme) return;
-    setNotification({
-      status: "info",
-      message: `Previewing widget in theme: ${themes.find(t => t.id === selectedTheme)?.name || "Unknown"}`,
-    });
-    // You can add logic here to actually preview in the selected theme
-  };
+  // Add this function inside your Widget component
+  
 
   // Handle color changes
   const handleColorChange = (key, value) => {
@@ -292,47 +284,6 @@ export default function Widget() {
         }
       }, []);
 
-  // Add these constants at the top of your Widget component file
-  const APP_API_KEY = import.meta.env.VITE_SHOPIFY_API_KEY; // Replace with your app's API key from Shopify Partners
-  const APP_BLOCK_HANDLE = "share-cart-widget";
-
-  // Template options for the merchant to choose where to add the block
-  const TEMPLATE_OPTIONS = [
-    { label: "Product Page", value: "product" },
-    { label: "Cart Page", value: "cart" },
-    { label: "Collection Page", value: "collection" },
-  ];
-
-  // Add these states in your Widget component
-  const [template, setTemplate] = useState("product");
-
-  // Helper to get the shop domain (update if you have a better source)
-    const getShopDomain = () => {
-    // Try to get from window.Shopify.shop or from a global variable
-    let shop = window?.Shopify?.shop || "your-store.myshopify.com";
-    // If shop does not already end with .myshopify.com, append it
-    if (!shop.endsWith(".myshopify.com")) {
-      shop = `${shop}.myshopify.com`;
-    }
-    return shop;
-  };
-
-  // Build the deep link for adding the app block
-          const getAddBlockDeepLink = () => {
-        const shopSubdomain = (window?.Shopify?.shop || "").replace(".myshopify.com", "");
-        const themeId = selectedTheme || (themes[0]?.id || "");
-        // No trailing slash here!
-        const shopifyAdmin = "https://admin.shopify.com/store";
-        if (!shopSubdomain || !themeId) {
-          return "#";
-        }
-        return `${shopifyAdmin}/${shopSubdomain}/themes/${themeId}/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
-      };
-
-  const handleAddBlock = () => {
-    window.open(getAddBlockDeepLink(), "_blank", "noopener");
-  };
-
   return (
     <div
       className="dashboard-container"
@@ -347,6 +298,41 @@ export default function Widget() {
           {notification && (
             <Banner status={notification.status} title={notification.message} />
           )}
+
+          {/* Shopify App Embed Onboarding */}
+          <Card
+            title="Enable Share Cart Widget in Your Theme"
+            sectioned
+            style={{ marginBottom: 24 }}
+          >
+            <Text as="p" variant="bodyMd" style={{ marginBottom: 12 }}>
+              To display the Share Cart widget on your storefront, you must enable the app embed block in your current Shopify theme.
+            </Text>
+            <ol style={{ marginBottom: 12, paddingLeft: 18 }}>
+              <li>
+                Adjust your widget settings below and click <b>Save</b>.
+              </li>
+              <li>
+                After saving, click <b>Open Theme Editor</b> to open your theme editor with the Share Cart block highlighted.
+              </li>
+              <li>
+                In the theme editor, toggle <b>Share Cart Widget</b> to <b>active</b>.
+              </li>
+              <li>
+                Save your changes in the theme editor.
+              </li>
+            </ol>
+            <Banner status="info" title="Changing themes?">
+              <Text as="span" variant="bodySm">
+                If you change or publish a new theme, you will need to re-enable the Share Cart app embed block for the new theme.
+              </Text>
+            </Banner>
+            <Text as="p" variant="bodySm" color="subdued" style={{ marginTop: 12 }}>
+              <b>Supported templates:</b> Product, Cart, and Checkout pages.
+            </Text>
+          </Card>
+          {/* End Shopify App Embed Onboarding */}
+
           {!loadingWidget && (
             <Layout>
               <Layout.Section oneHalf>
@@ -532,6 +518,18 @@ export default function Widget() {
                     >
                       {saving ? "Saving..." : "Save"}
                     </Button>
+                    <a
+                      href={
+                        shopOrigin
+                          ? `https://admin.shopify.com/store/${shopOrigin}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`
+                          : "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ marginLeft: 16 }}
+                    >
+                      <Button primary>Open Theme Editor</Button>
+                    </a>
                   </div>
                 </Card>
               </Layout.Section>
@@ -650,25 +648,6 @@ export default function Widget() {
                   )}
                 </Card>
               </Layout.Section>
-              <Layout.Section oneHalf>
-                <Card title="Add Widget to Your Theme" sectioned>
-                  <div style={{ marginBottom: 16 }}>
-                    <Text variant="headingSm" as="h3">Select Page Template</Text>
-                    <Select
-                      options={TEMPLATE_OPTIONS}
-                      value={template}
-                      onChange={setTemplate}
-                      placeholder="Select a template"
-                    />
-                  </div>
-                  <Button onClick={handleAddBlock}>
-                    Add Share Cart Widget to Theme
-                  </Button>
-                  <div style={{ marginTop: 8, fontSize: 13, color: "#888" }}>
-                    This will open the Shopify theme editor and let you add the Share Cart Widget block to the selected page.
-                  </div>
-                </Card>
-              </Layout.Section>
             </Layout>
           )}
         </Page>
@@ -679,3 +658,4 @@ export default function Widget() {
     </div>
   );
 }
+
