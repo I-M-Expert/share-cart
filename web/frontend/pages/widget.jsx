@@ -224,19 +224,14 @@ export default function Widget() {
     fetchSettings();
   }, []);
 
-  // Replace with your actual app block extension UUID
-  const APP_BLOCK_ID = "YOUR_APP_BLOCK_UUID"; // e.g. "apps/YOUR_APP_HANDLE/YOUR_BLOCK_ID"
-
-  const getThemeDeepLink = () => {
-    if (!selectedTheme) return "#";
-    // You may need to get the shop domain from session or context
-    const shop = window?.Shopify?.shop || ""; // fallback, set this properly if needed
-    return `https://${shop}/admin/themes/${selectedTheme}/editor?activateAppId=${APP_BLOCK_ID}`;
-  };
-
+  // Preview handler
   const handlePreviewTheme = () => {
     if (!selectedTheme) return;
-    window.open(getThemeDeepLink(), "_blank", "noopener");
+    setNotification({
+      status: "info",
+      message: `Previewing widget in theme: ${themes.find(t => t.id === selectedTheme)?.name || "Unknown"}`,
+    });
+    // You can add logic here to actually preview in the selected theme
   };
 
   // Handle color changes
@@ -296,6 +291,35 @@ export default function Widget() {
           document.body.appendChild(s1);
         }
       }, []);
+
+  // Add these constants at the top of your Widget component file
+  const APP_API_KEY = import.meta.env.VITE_SHOPIFY_API_KEY; // Replace with your app's API key from Shopify Partners
+  const APP_BLOCK_HANDLE = "share-cart-widget";
+
+  // Template options for the merchant to choose where to add the block
+  const TEMPLATE_OPTIONS = [
+    { label: "Product Page", value: "product" },
+    { label: "Cart Page", value: "cart" },
+    { label: "Collection Page", value: "collection" },
+  ];
+
+  // Add these states in your Widget component
+  const [template, setTemplate] = useState("product");
+
+  // Helper to get the shop domain (update if you have a better source)
+  const getShopDomain = () => {
+    return window?.Shopify?.shop || "your-store.myshopify.com";
+  };
+
+  // Build the deep link for adding the app block
+  const getAddBlockDeepLink = () => {
+    const shop = getShopDomain();
+    return `https://${shop}/admin/themes/current/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
+  };
+
+  const handleAddBlock = () => {
+    window.open(getAddBlockDeepLink(), "_blank", "noopener");
+  };
 
   return (
     <div
@@ -635,6 +659,25 @@ export default function Widget() {
                       </div>
                     </div>
                   )}
+                </Card>
+              </Layout.Section>
+              <Layout.Section oneHalf>
+                <Card title="Add Widget to Your Theme" sectioned>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text variant="headingSm" as="h3">Select Page Template</Text>
+                    <Select
+                      options={TEMPLATE_OPTIONS}
+                      value={template}
+                      onChange={setTemplate}
+                      placeholder="Select a template"
+                    />
+                  </div>
+                  <Button onClick={handleAddBlock}>
+                    Add Share Cart Widget to Theme
+                  </Button>
+                  <div style={{ marginTop: 8, fontSize: 13, color: "#888" }}>
+                    This will open the Shopify theme editor and let you add the Share Cart Widget block to the selected page.
+                  </div>
                 </Card>
               </Layout.Section>
             </Layout>
