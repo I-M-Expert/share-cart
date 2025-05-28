@@ -285,11 +285,10 @@ export default function Widget() {
       }, []);
 
 
-      const handleNavigate = () => {
-        window.open(
-          `https://admin.shopify.com/store/${shop?.replace(".myshopify.com", "")}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`,
-          "_blank"
-        );
+      const getThemeEditorUrl = () => {
+        if (!shop) return "#";
+        // shop is like "your-store.myshopify.com"
+        return `https://${shop}/admin/themes/current/editor?enableAppEmbedId=${shopifyApiKey}/share-cart-widget&context=apps`;
       };
   return (
     <div
@@ -529,9 +528,10 @@ export default function Widget() {
                     </Button>
                     <Button
                       primary
-                     onClick={handleNavigate}
+                      url={getThemeEditorUrl()}
                       external
                       style={{ marginLeft: 16 }}
+                      disabled={!shop}
                     >
                       Open Theme Editor
                     </Button>
