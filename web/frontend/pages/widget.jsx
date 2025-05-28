@@ -20,9 +20,6 @@ const BUTTON_STYLE_OPTIONS = [
 ];
 
 const shopifyApiKey = import.meta.env.VITE_SHOPIFY_API_KEY;
-const shopOrigin =
-  document.querySelector('meta[name="shopify-shop-origin"]')?.getAttribute("content") ||
-  ""; // fallback to empty string if not set
 
 // Update ShareButtons to accept coupon prop
 const ShareButtons = ({ buttonStyle, direction = "row", colors, coupon }) => {
@@ -529,7 +526,6 @@ export default function Widget() {
                       }
                       external
                       style={{ marginLeft: 16 }}
-                      disabled={!shopOrigin}
                     >
                       Open Theme Editor
                     </Button>
