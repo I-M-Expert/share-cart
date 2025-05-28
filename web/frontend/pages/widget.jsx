@@ -186,6 +186,8 @@ export default function Widget() {
   // State for loading widget fetch
   const [loadingWidget, setLoadingWidget] = useState(true);
 
+  const [shop, setShop] = useState("")
+
   // Fetch existing widget settings on mount
   useEffect(() => {
     async function fetchSettings() {
@@ -208,6 +210,7 @@ export default function Widget() {
             text: data.widget.colors?.text || "#212121",
           });
           setCoupon(data.widget.coupon || null);
+          setShop(data.shop)
         }
       } catch (err) {
         setNotification({
