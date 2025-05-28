@@ -520,9 +520,7 @@ export default function Widget() {
                     <Button
                       primary
                       url={
-                        shopOrigin
-                          ? `https://admin.shopify.com/store/${shop?.replace(".myshopify.com", "")}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`
-                          : "#"
+                        `https://admin.shopify.com/store/${shop?.replace(".myshopify.com", "")}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`
                       }
                       external
                       style={{ marginLeft: 16 }}
