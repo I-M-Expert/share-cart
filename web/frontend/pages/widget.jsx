@@ -284,6 +284,13 @@ export default function Widget() {
         }
       }, []);
 
+
+      const handleNavigate = () => {
+        window.open(
+          `https://admin.shopify.com/store/${shop?.replace(".myshopify.com", "")}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`,
+          "_blank"
+        );
+      };
   return (
     <div
       className="dashboard-container"
@@ -512,7 +519,7 @@ export default function Widget() {
                     </div>
                   </div>
 
-                  <div className="d-flex jcfe aic" style={{ width: "100%" }}>
+                  <div className="d-flex jcfe aic gap-2" style={{ width: "100%" }}>
                     <Button
                       style={{ borderRadius: 8 }}
                       onClick={handleSave}
@@ -522,9 +529,7 @@ export default function Widget() {
                     </Button>
                     <Button
                       primary
-                      url={
-                        `https://admin.shopify.com/store/${shop?.replace(".myshopify.com", "")}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`
-                      }
+                     onClick={handleNavigate}
                       external
                       style={{ marginLeft: 16 }}
                     >
