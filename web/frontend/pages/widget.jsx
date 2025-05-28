@@ -288,7 +288,7 @@ export default function Widget() {
       const getThemeEditorUrl = () => {
         if (!shop) return "#";
         // shop is like "your-store.myshopify.com"
-        window.open(`https://${shop}/admin/themes/current/editor?enableAppEmbedId=${shopifyApiKey}/share-cart-widget&context=apps`, "_blank");
+        window.open(`https://${shop}/admin/themes/current/editor?template=product&addAppBlockId=${shopifyApiKey}/share-cart-widget&target=mainSection`, "_blank");
       };
   return (
     <div
