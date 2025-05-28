@@ -520,18 +520,19 @@ export default function Widget() {
                     >
                       {saving ? "Saving..." : "Save"}
                     </Button>
-                    <a
-                      href={
+                    <Button
+                      primary
+                      url={
                         shopOrigin
                           ? `https://admin.shopify.com/store/${shopOrigin}/themes/current/editor?enableAppEmbedId=${shopifyApiKey}::share-cart-widget`
                           : "#"
                       }
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      external
                       style={{ marginLeft: 16 }}
+                      disabled={!shopOrigin}
                     >
-                      <Button primary>Open Theme Editor</Button>
-                    </a>
+                      Open Theme Editor
+                    </Button>
                   </div>
                 </Card>
               </Layout.Section>
