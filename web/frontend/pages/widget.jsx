@@ -318,9 +318,12 @@ export default function Widget() {
   };
 
   // Build the deep link for adding the app block
-  const getAddBlockDeepLink = () => {
-    const shop = getShopDomain();
-    return `https://${shop}/admin/themes/current/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
+    const getAddBlockDeepLink = () => {
+    // Use admin.shopify.com/store/{shop}/themes/{themeId}/editor
+    const shopSubdomain = (window?.Shopify?.shop || "").replace(".myshopify.com", "");
+    const themeId = selectedTheme; // selectedTheme should be the theme's numeric ID
+    const shopifyAdmin = "https://admin.shopify.com/store";
+    return `${shopifyAdmin}/${shopSubdomain}/themes/${themeId}/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
   };
 
   const handleAddBlock = () => {
