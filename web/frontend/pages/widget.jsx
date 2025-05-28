@@ -307,8 +307,14 @@ export default function Widget() {
   const [template, setTemplate] = useState("product");
 
   // Helper to get the shop domain (update if you have a better source)
-  const getShopDomain = () => {
-    return window?.Shopify?.shop || "your-store.myshopify.com";
+    const getShopDomain = () => {
+    // Try to get from window.Shopify.shop or from a global variable
+    let shop = window?.Shopify?.shop || "your-store.myshopify.com";
+    // If shop does not already end with .myshopify.com, append it
+    if (!shop.endsWith(".myshopify.com")) {
+      shop = `${shop}.myshopify.com`;
+    }
+    return shop;
   };
 
   // Build the deep link for adding the app block
