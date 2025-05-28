@@ -318,13 +318,16 @@ export default function Widget() {
   };
 
   // Build the deep link for adding the app block
-    const getAddBlockDeepLink = () => {
-    // Use admin.shopify.com/store/{shop}/themes/{themeId}/editor
-    const shopSubdomain = (window?.Shopify?.shop || "").replace(".myshopify.com", "");
-    const themeId = selectedTheme; // selectedTheme should be the theme's numeric ID
-    const shopifyAdmin = "https://admin.shopify.com/store";
-    return `${shopifyAdmin}/${shopSubdomain}/themes/${themeId}/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
-  };
+          const getAddBlockDeepLink = () => {
+        const shopSubdomain = (window?.Shopify?.shop || "").replace(".myshopify.com", "");
+        const themeId = selectedTheme || (themes[0]?.id || "");
+        // No trailing slash here!
+        const shopifyAdmin = "https://admin.shopify.com/store";
+        if (!shopSubdomain || !themeId) {
+          return "#";
+        }
+        return `${shopifyAdmin}/${shopSubdomain}/themes/${themeId}/editor?template=${template}&addAppBlockId=${APP_API_KEY}/${APP_BLOCK_HANDLE}&target=mainSection`;
+      };
 
   const handleAddBlock = () => {
     window.open(getAddBlockDeepLink(), "_blank", "noopener");
@@ -348,29 +351,6 @@ export default function Widget() {
             <Layout>
               <Layout.Section oneHalf>
                 <Card title="Customize Widget" sectioned>
-                  {/* Theme Selector */}
-                  <div style={{ marginBottom: 24 }}>
-                    <Text variant="headingSm" as="h3">
-                      Select Theme for Widget
-                    </Text>
-                    <Select
-                      options={themes.map((theme) => ({
-                        label: `${theme.name} (${theme.role})`,
-                        value: theme.id,
-                      }))}
-                      value={selectedTheme}
-                      onChange={setSelectedTheme}
-                      placeholder="Select a theme"
-                    />
-                    <Button
-                      style={{ marginTop: 12 }}
-                      onClick={handlePreviewTheme}
-                      disabled={!selectedTheme}
-                    >
-                      Preview in Theme
-                    </Button>
-                  </div>
-
                   {/* Display Option */}
                   <div style={{ marginBottom: 24 }}>
                     <Text variant="headingSm" as="h3">
