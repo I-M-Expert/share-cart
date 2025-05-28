@@ -300,10 +300,11 @@ export default function Widget() {
           )}
 
           {/* Shopify App Embed Onboarding */}
+          <div style={{ marginBottom: 24 }}>
           <Card
             title="Enable Share Cart Widget in Your Theme"
             sectioned
-            style={{ marginBottom: 24 }}
+            
           >
             <Text as="p" variant="bodyMd" style={{ marginBottom: 12 }}>
               To display the Share Cart widget on your storefront, you must enable the app embed block in your current Shopify theme.
@@ -331,6 +332,7 @@ export default function Widget() {
               <b>Supported templates:</b> Product, Cart, and Checkout pages.
             </Text>
           </Card>
+          </div>
           {/* End Shopify App Embed Onboarding */}
 
           {!loadingWidget && (
