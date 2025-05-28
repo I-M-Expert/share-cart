@@ -12,34 +12,11 @@ export const fetchWidget = async (req, res) => {
     }
     const widget = await Widget.findOne({ shop }).sort({ createdAt: -1 }).populate('coupon').lean();
 
-    // Fetch all user-installed themes from Shopify
-    let themes = [];
-    try {
-        const client = new shopify.api.clients.Graphql({ session });
-        const themeResponse = await client.request(`
-            query {
-                themes(first: 50) {
-                    edges {
-                        node {
-                            id
-                            name
-                            role
-                            previewable
-                            themeStoreId
-                        }
-                    }
-                }
-            }
-        `);
-        themes = themeResponse?.body?.data?.themes?.edges?.map(edge => edge.node) || [];
-    } catch (error) {
-        console.error("Failed to fetch themes:", error);
-    }
-
+    
     res.status(200).json({
         success: true,
         widget: widget || null,
-        themes,
+        shop,
     });
 };
 
