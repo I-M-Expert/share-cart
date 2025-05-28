@@ -288,7 +288,7 @@ export default function Widget() {
       const getThemeEditorUrl = () => {
         if (!shop) return "#";
         // shop is like "your-store.myshopify.com"
-        return `https://${shop}/admin/themes/current/editor?enableAppEmbedId=${shopifyApiKey}/share-cart-widget&context=apps`;
+        window.open(`https://${shop}/admin/themes/current/editor?enableAppEmbedId=${shopifyApiKey}/share-cart-widget&context=apps`, "_blank");
       };
   return (
     <div
@@ -528,8 +528,7 @@ export default function Widget() {
                     </Button>
                     <Button
                       primary
-                      url={getThemeEditorUrl()}
-                      external
+                      onClick={getThemeEditorUrl}
                       style={{ marginLeft: 16 }}
                       disabled={!shop}
                     >
