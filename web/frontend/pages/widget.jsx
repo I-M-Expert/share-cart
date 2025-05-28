@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Page, Text, TextField, Banner, Spinner, Layout } from "@shopify/polaris";
+import { Card, Page, Text, TextField, Banner, Spinner, Layout, Select } from "@shopify/polaris";
 import Sidebar from "../components/Sidebar";
 import { Icon } from "@iconify/react";
 import { logo } from "../assets";
@@ -160,6 +160,8 @@ export default function Widget() {
 
   // Add coupon state
   const [coupon, setCoupon] = useState(null);
+  const [themes, setThemes] = useState([]);
+  const [selectedTheme, setSelectedTheme] = useState("");
 
   // Get allowed number from permissions (default to 1 if not set)
   const allowedDisplayCount = subscription?.permissions?.widget || 1;
@@ -207,6 +209,10 @@ export default function Widget() {
           });
           setCoupon(data.widget.coupon || null);
         }
+        if (data.themes) {
+          setThemes(data.themes);
+          setSelectedTheme(data.themes[0]?.id || "");
+        }
       } catch (err) {
         setNotification({
           status: "critical",
@@ -218,8 +224,20 @@ export default function Widget() {
     fetchSettings();
   }, []);
 
-  // Add this function inside your Widget component
-  
+  // Replace with your actual app block extension UUID
+  const APP_BLOCK_ID = "YOUR_APP_BLOCK_UUID"; // e.g. "apps/YOUR_APP_HANDLE/YOUR_BLOCK_ID"
+
+  const getThemeDeepLink = () => {
+    if (!selectedTheme) return "#";
+    // You may need to get the shop domain from session or context
+    const shop = window?.Shopify?.shop || ""; // fallback, set this properly if needed
+    return `https://${shop}/admin/themes/${selectedTheme}/editor?activateAppId=${APP_BLOCK_ID}`;
+  };
+
+  const handlePreviewTheme = () => {
+    if (!selectedTheme) return;
+    window.open(getThemeDeepLink(), "_blank", "noopener");
+  };
 
   // Handle color changes
   const handleColorChange = (key, value) => {
@@ -297,6 +315,29 @@ export default function Widget() {
             <Layout>
               <Layout.Section oneHalf>
                 <Card title="Customize Widget" sectioned>
+                  {/* Theme Selector */}
+                  <div style={{ marginBottom: 24 }}>
+                    <Text variant="headingSm" as="h3">
+                      Select Theme for Widget
+                    </Text>
+                    <Select
+                      options={themes.map((theme) => ({
+                        label: `${theme.name} (${theme.role})`,
+                        value: theme.id,
+                      }))}
+                      value={selectedTheme}
+                      onChange={setSelectedTheme}
+                      placeholder="Select a theme"
+                    />
+                    <Button
+                      style={{ marginTop: 12 }}
+                      onClick={handlePreviewTheme}
+                      disabled={!selectedTheme}
+                    >
+                      Preview in Theme
+                    </Button>
+                  </div>
+
                   {/* Display Option */}
                   <div style={{ marginBottom: 24 }}>
                     <Text variant="headingSm" as="h3">
