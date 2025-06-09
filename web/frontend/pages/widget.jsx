@@ -334,9 +334,11 @@ export default function Widget() {
                 If you change or publish a new theme, you will need to re-enable the Share Cart app embed block for the new theme.
               </Text>
             </Banner>
-            <Text as="p" variant="bodySm" color="subdued" style={{ marginTop: 12 }}>
+            <div style={{marginTop:12}}>
+            <Text as="p" variant="bodySm" color="subdued">
               <b>Supported templates:</b> Product, Cart, and Checkout pages.
             </Text>
+            </div>
           </Card>
           </div>
           {/* End Shopify App Embed Onboarding */}

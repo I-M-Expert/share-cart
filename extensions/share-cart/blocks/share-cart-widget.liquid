@@ -155,6 +155,18 @@
               share_message: share_message
             %}
           </div>
+          <p class="share-cart-no-thanks" style="
+    color: {{ widget_settings.colors.text }};
+    font-size: 17px;
+    margin-bottom: 10px;
+    text-align: center;
+    margin-top: 16px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: color 0.2s, opacity 0.2s;
+  " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">
+    No thanks! I prefer not to get a discount
+  </p>
         </div>`;
 
         var tempDiv = document.createElement('div');
@@ -177,12 +189,19 @@
             });
           });
           document.querySelectorAll('.share-messenger-link').forEach(link => {
-            link.addEventListener('click', function() {
-              handleShareButtonClick('messenger');
+            link.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              updateShareLinks().then(links => {
+                var messageMatch = decodeURIComponent(links.email.match(/body=([^&]*)/)[1]);
+                showMessengerShareModal(messageMatch, links.messenger.replace('https://m.me/?link=', ''));
+              });
+              return false;
             });
           });
           document.querySelectorAll('.share-email-link').forEach(link => {
-            link.addEventListener('click', function() {
+            link.addEventListener('click', function(e) {
+            
               handleShareButtonClick('email');
             });
           });
@@ -219,6 +238,7 @@
       position: relative;
       transition: box-shadow 0.2s;
     ">
+   
     <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
@@ -277,6 +297,7 @@
       position: relative;
       transition: box-shadow 0.2s;
     ">
+    
     <img src="https://pub-e6560b24ade84eb59f4cc3475c3a1bf0.r2.dev/new%20logo%20(2).png" alt="Share Cart Logo" style="width: 170px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 2px 8px rgba(50,198,206,0.12));">
       <p style="
         color: {{ widget_settings.colors.text }};
@@ -373,12 +394,13 @@
     'form[action*="/cart"] [type="submit"], button[name="checkout"], [href="/checkout"], .cart__checkout, .mini-cart__checkout'
   );
   checkoutBtns.forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      popup.style.display = 'flex';
-      setShareLinks();
-    });
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    window.shareCartCheckoutIntent = true; // <--- Add this line
+    popup.style.display = 'flex';
+    setShareLinks();
   });
+});
 }
 
     // Cart drawer checkout button (common selectors for Shopify themes)
@@ -470,12 +492,16 @@
       const emailLinks = document.querySelectorAll('.share-email-link');
       const whatsappLinks = document.querySelectorAll('.share-whatsapp-link');
       const messengerLinks = document.querySelectorAll('.share-messenger-link');
-      
-      emailLinks.forEach(link => link.href = links.email);
-      whatsappLinks.forEach(link => {
-        link.href = links.whatsapp; 
-        console.log('whatsapp link set to:', links.whatsapp);
-      });
+      emailLinks.forEach(link => {
+      console.log('Setting email link:', links.email); // <-- Add this line
+      link.href = links.email;
+      link.classList.remove('disabled');
+      link.style.pointerEvents = 'auto';
+      link.style.opacity = '1';
+      const btn = link.querySelector('button');
+      if (btn) btn.style.cursor = 'pointer';
+    });
+      whatsappLinks.forEach(link => link.href = links.whatsapp);
       messengerLinks.forEach(link => link.href = links.messenger);
     }).catch(error => {
       console.error("Error updating share links:", error);
@@ -582,6 +608,11 @@
     };
     document.getElementById('close-share-success-popup').onclick = function() {
       popup.remove();
+      // If the popup was triggered by checkout, redirect to checkout
+      if (window.shareCartCheckoutIntent) {
+        window.location.href = '/checkout';
+        window.shareCartCheckoutIntent = false;
+      }
     };
   }
 
@@ -641,19 +672,21 @@
   });
 
   document.querySelectorAll('.share-messenger-link').forEach(link => {
-  link.addEventListener('click', function(e) {
-    e.preventDefault();
-    updateShareLinks().then(links => {
-      // Get the message from the email link (since it includes the message)
-      var messageMatch = decodeURIComponent(links.email.match(/body=([^&]*)/)[1]);
-      showMessengerShareModal(messageMatch, links.messenger.replace('https://m.me/?link=', ''));
+    link.addEventListener('click', function(e) {
+      e.preventDefault(); // <-- Prevent default navigation
+        e.stopImmediatePropagation();
+      updateShareLinks().then(links => {
+        // Get the message from the email link (since it includes the message)
+        var messageMatch = decodeURIComponent(links.email.match(/body=([^&]*)/)[1]);
+        showMessengerShareModal(messageMatch, links.messenger.replace('https://m.me/?link=', ''));
+      });
+      // handleShareButtonClick('messenger');
+       return false;
     });
-    handleShareButtonClick('messenger');
   });
-});
 
   document.querySelectorAll('.share-email-link').forEach(link => {
-    link.addEventListener('click', function() {
+    link.addEventListener('click', function(e) {
       handleShareButtonClick('email');
     });
   });
@@ -679,7 +712,7 @@
   modal.style.justifyContent = 'center';
 
   modal.style.setProperty('position', 'fixed', 'important');
-modal.style.setProperty('z-index', '2147483647', 'important');
+  modal.style.setProperty('z-index', '2147483647', 'important');
 
   modal.innerHTML = `
     <div style="
@@ -721,7 +754,7 @@ modal.style.setProperty('z-index', '2147483647', 'important');
         cursor: pointer;
         margin-bottom: 10px;
       ">Copy Message</button>
-      <a href="https://m.me/?link=${encodeURIComponent(shareCartLink)}" target="_blank" style="
+      <a id="open-messenger-link" href="https://m.me/?link=${encodeURIComponent(shareCartLink)}" target="_blank" style="
         color: #32c6ce;
         text-decoration: underline;
         font-size: 1em;
@@ -742,81 +775,99 @@ modal.style.setProperty('z-index', '2147483647', 'important');
     this.textContent = 'Copied!';
     setTimeout(() => { this.textContent = 'Copy Message'; }, 1500);
   };
+
+  // --- Add this block for your requirement ---
+  document.getElementById('open-messenger-link').onclick = function(e) {
+    e.preventDefault();
+
+    // Close all modals
+    var modals = [
+      document.getElementById('messenger-share-modal'),
+      document.getElementById('share-cart-popup'),
+      document.getElementById('share-success-popup')
+    ];
+    modals.forEach(function(m) { if (m) m.style.display = 'none'; });
+
+    // Open Messenger in a new tab
+    window.open(this.href, '_blank');
+
+    // Show thank you modal after a short delay
+    var discountText = `{% if widget_settings.coupon.discountType == 'fixed' and widget_settings.coupon.fixedAmount and widget_settings.coupon.fixedAmount != blank %}${{ widget_settings.coupon.fixedAmount }}{% else %}{{ widget_settings.coupon.percentageValue | times: 100 }}%{% endif %}`;
+    setTimeout(function() {
+      showShareSuccessPopup(discountText);
+    }, 500);
+
+    return false;
+  };
 }
 
 
   document.addEventListener('DOMContentLoaded', function() {
     // Hide widget on "No thanks" click (cart page)
-    var cartWidget = document.getElementById('share-cart-cart-widget');
-    if (cartWidget) {
-      var noThanks = cartWidget.querySelector('.share-cart-no-thanks');
-      if (noThanks) {
-        noThanks.addEventListener('click', function() {
-          cartWidget.style.display = 'none';
-        });
-      }
-    }
+    // var cartWidget = document.getElementById('share-cart-cart-widget');
+    // if (cartWidget) {
+    //   var noThanks = cartWidget.querySelector('.share-cart-no-thanks');
+    //   if (noThanks) {
+    //     noThanks.addEventListener('click', function() {
+    //       cartWidget.style.display = 'none';
+    //     });
+    //   }
+    // }
 
     // Hide widget on "No thanks" click (product page)
-    var observer = new MutationObserver(function() {
-      var productWidget = document.getElementById('share-cart-product-widget');
-      if (productWidget) {
-        var noThanks = productWidget.querySelector('.share-cart-no-thanks');
-        if (noThanks && !noThanks.dataset.listenerAdded) {
-          noThanks.addEventListener('click', function() {
-            productWidget.style.display = 'none';
-          });
-          noThanks.dataset.listenerAdded = "true";
-        }
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    // var observer = new MutationObserver(function() {
+    //   var productWidget = document.getElementById('share-cart-product-widget');
+    //   if (productWidget) {
+    //     var noThanks = productWidget.querySelector('.share-cart-no-thanks');
+    //     if (noThanks && !noThanks.dataset.listenerAdded) {
+    //       noThanks.addEventListener('click', function() {
+    //         productWidget.style.display = 'none';
+    //       });
+    //       noThanks.dataset.listenerAdded = "true";
+    //     }
+    //   }
+    // });
+    // observer.observe(document.body, { childList: true, subtree: true });    
   });
 
   document.addEventListener('DOMContentLoaded', function() {
     // Hide widget on "No thanks" click (cart page, product page, popups)
-    document.querySelectorAll('.share-cart-no-thanks').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        // Set the flag so popup doesn't show again
-        window.shareCartNoThanksClicked = true;
+    document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('share-cart-no-thanks')) {
+    window.shareCartNoThanksClicked = true;
 
-        // Find which popup/widget is visible
-        var cartWidget = document.getElementById('share-cart-cart-widget');
-        var productWidget = document.getElementById('share-cart-product-widget');
-        var popup = document.getElementById('share-cart-popup');
+    var cartWidget = document.getElementById('share-cart-cart-widget');
+    var productWidget = document.getElementById('share-cart-product-widget');
+    var popup = document.getElementById('share-cart-popup');
 
-        // If inside a popup, close and continue flow
-        if (popup && popup.style.display === 'flex') {
-          popup.style.display = 'none';
-          setTimeout(function() {
-            {% if display_str contains 'checkout' and template == 'cart' %}
-              window.location.href = '/checkout';
-            {% elsif display_str contains 'add_to_cart' and template == 'product' %}
-              window.location.href = '/cart';
-            {% endif %}
-          }, 200); // <-- Add a short delay before navigation
-          return;
-        }
+    // If inside a popup, close and continue flow
+    if (popup && popup.style.display === 'flex') {
+      popup.style.display = 'none';
+      setTimeout(function() {
+        window.location.href = '/checkout';
+      }, 200);
+      return;
+    }
 
-        // If cart widget is visible, hide and continue to checkout
-        if (cartWidget && cartWidget.style.display !== 'none') {
-          cartWidget.style.display = 'none';
-          setTimeout(function() {
-            window.location.href = '/checkout';
-          }, 200); // <-- Add a short delay before navigation
-          return;
-        }
+    // If cart widget is visible, hide and continue to checkout
+    if (cartWidget && cartWidget.style.display !== 'none') {
+      cartWidget.style.display = 'none';
+      setTimeout(function() {
+        window.location.href = '/checkout';
+      }, 200);
+      return;
+    }
 
-        // If product widget is visible, hide and go to cart
-        if (productWidget && productWidget.style.display !== 'none') {
-          productWidget.style.display = 'none';
-          setTimeout(function() {
-            window.location.href = '/cart';
-          }, 200); // <-- Add a short delay before navigation
-          return;
-        }
-      });
-    });
+    // If product widget is visible, hide and go to checkout
+    if (productWidget && productWidget.style.display !== 'none') {
+      productWidget.style.display = 'none';
+      setTimeout(function() {
+        window.location.href = '/checkout';
+      }, 200);
+      return;
+    }
+  }
+});
 
     // --- Ensure cart drawer checkout buttons always trigger the popup ---
 document.addEventListener('DOMContentLoaded', function() {
@@ -863,6 +914,38 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
   });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Move all modals to <body> to avoid theme container clipping
+  ['share-cart-popup', 'share-success-popup', 'messenger-share-modal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.parentNode !== document.body) {
+      document.body.appendChild(el);
+    }
+  });
+
+  // Force modal and backdrop to escape stacking context
+  var style = document.createElement('style');
+  style.innerHTML = `
+    #share-cart-popup, #share-success-popup, #messenger-share-modal {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 2147483647 !important;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: all !important;
+    }
+    #share-cart-popup[style*="display: flex"], 
+    #share-success-popup[style*="display: flex"], 
+    #messenger-share-modal[style*="display: flex"] {
+      display: flex !important;
+    }
+  `;
+  document.head.appendChild(style);
+});
 </script>
 
 {% schema %}
