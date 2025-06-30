@@ -152,7 +152,7 @@ export const createCoupon = async (req, res) => {
         items = {
           all: false,
           ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-          ...(collectionIds.length ? { collections: { collectionsToAdd: collectionIds } } : {}),
+          ...(collectionIds.length ? { collections: collectionIds } : {}),
         };
       } else {
         items = { all: true }; // fallback, but you already block this case above

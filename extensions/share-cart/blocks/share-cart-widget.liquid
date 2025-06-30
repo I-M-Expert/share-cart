@@ -155,18 +155,7 @@
               share_message: share_message
             %}
           </div>
-          <p class="share-cart-no-thanks" style="
-    color: {{ widget_settings.colors.text }};
-    font-size: 17px;
-    margin-bottom: 10px;
-    text-align: center;
-    margin-top: 16px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: color 0.2s, opacity 0.2s;
-  " onmouseover="this.style.color='#32c6ce';this.style.opacity='1'" onmouseout="this.style.color='{{ widget_settings.colors.text }}';this.style.opacity='0.7'">
-    No thanks! I prefer not to get a discount
-  </p>
+          
         </div>`;
 
         var tempDiv = document.createElement('div');
@@ -861,6 +850,18 @@
     // If product widget is visible, hide and go to checkout
     if (productWidget && productWidget.style.display !== 'none') {
       productWidget.style.display = 'none';
+      setTimeout(function() {
+        window.location.href = '/cart';
+      }, 200);
+      return;
+    }
+
+    // If triggered from cart drawer, always go to checkout
+    if (
+      e.target.closest('.cart-drawer') ||
+      e.target.closest('.drawer--cart') ||
+      e.target.closest('#CartDrawer')
+    ) {
       setTimeout(function() {
         window.location.href = '/checkout';
       }, 200);
