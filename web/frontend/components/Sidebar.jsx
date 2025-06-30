@@ -23,11 +23,11 @@ export const mainMenu = [
     slug: "activity",
     link: "/activity",
   },
-  // {
-  //   title: "Plans",
-  //   slug: "plans",
-  //   link: "/plans",
-  // },
+  {
+    title: "Plans",
+    slug: "plans",
+    link: "/plans",
+  },
   {
     title: "Support",
     slug: "support",

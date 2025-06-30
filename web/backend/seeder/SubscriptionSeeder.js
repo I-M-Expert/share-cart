@@ -12,8 +12,80 @@ mongoose.connect(
 const subscriptions = [
   {
     id: 0,
-    name: "Free",
+    name: "Starter",
     amount: 0,
+    duration: "monthly",
+    description:
+      "Everything unlocked. Perfect for high-traffic stores that want maximum reach, unlimited sharing and full power of our software",
+
+    features: [
+      "Up to 15 Cart Shares",
+      "4 Widget locations",
+      "Unlimited Live Coupons",
+      "Full Widget Customization",
+      "24/7 Live Chat Support",
+      "Chat & Email Support",
+    ],
+
+    permissions: {
+      widget: 4,
+      cartShares: 15,
+      liveCoupons: "unlimited",
+      liveChat: true,
+    },
+  },
+  {
+    id: 1,
+    name: "Basic",
+    amount: 9.99,
+    duration: "monthly",
+    description:
+      "Everything unlocked. Perfect for high-traffic stores that want maximum reach, unlimited sharing and full power of our software",
+
+    features: [
+      "Up to 50 Cart Shares",
+      "4 Widget locations",
+      "Unlimited Live Coupons",
+      "Full Widget Customization",
+      "24/7 Live Chat Support",
+      "Chat & Email Support",
+    ],
+
+    permissions: {
+      widget: 4,
+      cartShares: 50,
+      liveCoupons: "unlimited",
+      liveChat: true,
+    },
+  },
+  {
+    id: 2,
+    name: "Standard",
+    amount: 19.99,
+    duration: "monthly",
+    description:
+      "Everything unlocked. Perfect for high-traffic stores that want maximum reach, unlimited sharing and full power of our software",
+
+    features: [
+      "Up to 100 Cart Shares",
+      "4 Widget locations",
+      "Unlimited Live Coupons",
+      "Full Widget Customization",
+      "24/7 Live Chat Support",
+      "Chat & Email Support",
+    ],
+
+    permissions: {
+      widget: 4,
+      cartShares: 100,
+      liveCoupons: "unlimited",
+      liveChat: true,
+    },
+  },
+  {
+    id: 3,
+    name: "Premium",
+    amount: 49.99,
     duration: "monthly",
     description:
       "Everything unlocked. Perfect for high-traffic stores that want maximum reach, unlimited sharing and full power of our software",
@@ -24,11 +96,12 @@ const subscriptions = [
       "Unlimited Live Coupons",
       "Full Widget Customization",
       "24/7 Live Chat Support",
+      "Chat & Email Support",
     ],
 
     permissions: {
       widget: 4,
-      cartShares: "unlimited",
+      cartShares: 'unlimited',
       liveCoupons: "unlimited",
       liveChat: true,
     },
