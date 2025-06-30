@@ -78,7 +78,7 @@ app.get(
 
       // 1. Search for the contact in the UNINSTALLED list
       const searchRes = await fetch(
-        `https://api.getresponse.com/v3/contacts?query[email]=${encodeURIComponent(email)}&query[campaignId]=${process.env.GETRESPONSE_UNINSTALLED_LIST_ID}`,
+        `https://api.getresponse.com/v3/contacts?query[email]=${encodeURIComponent(email)}&query[campaignId]=${process.env.GETRESPONSE_LIST_ID}`,
         {
           method: "GET",
           headers: {
@@ -113,6 +113,7 @@ app.get(
         body: JSON.stringify({
           email: email,
           name: data?.shop?.name,
+          dayOfCycle : 30,
           campaign: { campaignId: process.env.GETRESPONSE_LIST_ID },
         }),
       });
