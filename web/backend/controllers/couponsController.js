@@ -148,14 +148,25 @@ export const createCoupon = async (req, res) => {
       // Build customerGets based on discountType
       let customerGets;
       let items;
-      if (productIds.length || collectionIds.length) {
+
+      // Only allow either products or collections, not both
+      if (productIds.length && collectionIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot apply discount to both products and collections at the same time. Please select either products or collections.",
+        });
+      } else if (productIds.length) {
         items = {
           all: false,
-          ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-          ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
+          products: { productsToAdd: productIds }
+        };
+      } else if (collectionIds.length) {
+        items = {
+          all: false,
+          collections: { add: collectionIds }
         };
       } else {
-        items = { all: true }; // fallback, but you already block this case above
+        items = { all: true };
       }
 
       customerGets = {
@@ -544,6 +555,17 @@ console.log('now editting')
 
         let customerGets;
         let itemsInput;
+
+        if (
+  (couponUpdates.productIds && couponUpdates.productIds.length > 0) &&
+  (couponUpdates.collectionIds && couponUpdates.collectionIds.length > 0)
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Cannot apply discount to both products and collections at the same time. Please select either products or collections.",
+  });
+}
+
         if (updatedProductIds.length || updatedCollectionIds.length) {
           itemsInput = {
             all: false,
