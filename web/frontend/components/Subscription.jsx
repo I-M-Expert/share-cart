@@ -73,7 +73,7 @@ const handleSelectPlan = async (id, amount) => {
           marginTop: "24px",
         }}
       >
-        <div className="d-lg-flex aie my-3 jcc px-1 ">
+        <div className="d-lg-flex aie my-3 jcc " style={{ overflowX: "auto" }}>
           {filteredSubscriptions?.map((subscription) => (
             <div
               key={subscription._id}
@@ -84,6 +84,7 @@ const handleSelectPlan = async (id, amount) => {
                 borderRadius: "12px",
                 cursor: "pointer",
                 flexGrow: 1,
+                minWidth: "250px",
                 maxWidth: "300px",
               }}
             >
