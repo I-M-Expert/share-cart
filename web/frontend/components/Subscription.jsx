@@ -77,17 +77,18 @@ const handleSelectPlan = async (id) => {
               className="col-lg-3 col-md-3 col-sm-12 m-3"
               style={{
                 background:
-                  subscription.name.toLowerCase() === "growth" ? "#32c6ce" : "",
+                  subscription.name.toLowerCase() === "standard" ? "#32c6ce" : "",
                 borderRadius: "12px",
                 cursor: "pointer",
                 flexGrow: 1,
+                maxWidth: "300px",
               }}
             >
               <p
                 className="fs14 text-center"
                 style={{ padding: "10px 26px", color: "#fff", fontWeight: 600 }}
               >
-                {subscription.name.toLowerCase() === "growth" ? "Popular" : ""}
+                {subscription.name.toLowerCase() === "standard" ? "Popular" : ""}
               </p>
               <div
                 style={{
