@@ -151,17 +151,31 @@ export const createCoupon = async (req, res) => {
       if (productIds.length || collectionIds.length) {
         items = {
           all: false,
-          ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
-          ...(collectionIds.length ? { collections: collectionIds } : {}),
+          ...(productIds.length
+            ? { products: { productsToAdd: productIds } }
+            : {}),
+          ...(collectionIds.length
+            ? {
+                collections: collectionIds.map((id) => ({
+                  id: `gid://shopify/Collection/${id}`,
+                })),
+              }
+            : {}),
         };
       } else {
         items = { all: true }; // fallback, but you already block this case above
       }
 
       customerGets = {
-        value: discountType === "percentage"
-          ? { percentage: Number(normalizedPercentage) }
-          : { discountAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
+        value:
+          discountType === "percentage"
+            ? { percentage: Number(normalizedPercentage) }
+            : {
+                discountAmount: {
+                  amount: Number(fixedAmount),
+                  appliesOnEachItem: false,
+                },
+              },
         items,
       };
 
