@@ -126,7 +126,7 @@ export default {
         }
 
         // 2. Add to "uninstalled" list in GetResponse
-        await fetch("https://api.getresponse.com/v3/contacts", {
+        const addRes = await fetch("https://api.getresponse.com/v3/contacts", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -138,7 +138,12 @@ export default {
             campaign: { campaignId: process.env.GETRESPONSE_UNINSTALLED_LIST_ID },
           }),
         });
-        console.log(`Added ${email} to uninstalled list`);
+        const addData = await addRes.json();
+        if (!addRes.ok) {
+          console.error("Failed to add to uninstalled list:", addData);
+        } else {
+          console.log(`Added ${email} to uninstalled list`, addData);
+        }
       } catch (e) {
         console.error("Failed to update GetResponse list on uninstall:", e);
       }
