@@ -11,7 +11,28 @@ export async function registerWebhooks(session, shopify) {
         },
       },
       {
-        topic: "ORDERS_FULFILLED", // <-- Add this
+        topic: "ORDERS_FULFILLED",
+        webhookSubscription: {
+          callbackUrl: process.env.HOST + "/api/webhooks",
+          format: "JSON",
+        },
+      },
+      {
+        topic: "SHOP_REDACT",
+        webhookSubscription: {
+          callbackUrl: process.env.HOST + "/api/webhooks",
+          format: "JSON",
+        },
+      },
+      {
+        topic: "CUSTOMERS_REDACT",
+        webhookSubscription: {
+          callbackUrl: process.env.HOST + "/api/webhooks",
+          format: "JSON",
+        },
+      },
+      {
+        topic: "CUSTOMERS_DATA_REQUEST",
         webhookSubscription: {
           callbackUrl: process.env.HOST + "/api/webhooks",
           format: "JSON",
