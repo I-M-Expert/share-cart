@@ -73,7 +73,7 @@ const handleSelectPlan = async (id, amount) => {
           marginTop: "24px",
         }}
       >
-        <div className="d-lg-flex flex-wrap aie my-3 jcc px-2 ">
+        <div className="d-lg-flex flex-wrap aie my-3 jcb px-2 ">
           {filteredSubscriptions?.map((subscription) => (
             <div
               key={subscription._id}
