@@ -75,7 +75,7 @@ const handleSelectPlan = async (id, amount) => {
       >
         <div className="d-lg-flex flex-wrap aie my-3 jcb px-2 ">
           {filteredSubscriptions?.map((subscription) => (
-            { subscription.amount != 0 ? <div
+            <div
               key={subscription._id}
               className="col-lg-3 col-md-3 col-sm-12 m-3"
               style={{
@@ -148,80 +148,7 @@ const handleSelectPlan = async (id, amount) => {
                   )}
                 </Button>
               </div>
-            </div> : <div
-              key={subscription._id}
-              className="col-lg-3 col-md-3 col-sm-12 m-3"
-              style={{
-                background:
-                  subscription.name.toLowerCase() === "standard" ? "#32c6ce" : "",
-                borderRadius: "12px",
-                cursor: "pointer",
-                flexGrow: 1,
-                maxWidth: "300px",
-              }}
-            >
-              <p
-                className="fs14 text-center"
-                style={{ padding: "10px 26px", color: "#fff", fontWeight: 600 }}
-              >
-                {subscription.name.toLowerCase() === "standard" ? "Popular" : ""}
-              </p>
-              <div
-                style={{
-                  background: "#FBFBFB",
-                  borderRadius: "12px",
-                  border: "1px solid #C6C6C6",
-                  padding: "16px",
-                  margin: "1px",
-                }}
-                className="d-flex jcs flex-column gap-3"
-              >
-                <div className="mb-2">
-                  <p className="fs36 text-center fw700">{subscription.name}</p>
-                </div>
-                {subscription?.name != 'Free' && <div className="d-flex jcc aie">
-                  <p className="fw600 fs32 text-center">
-                    ${subscription.amount}
-                  </p>
-                  <p className="fs14" style={{ color: "#777777" }}>
-                    /{subscription.duration}
-                  </p>
-                </div>}
-
-                <p className="fs12">{subscription.description} </p>
-
-                <div>
-                  {subscription?.features?.map((feature, index) => (
-                    <div key={index}>
-                      <div className="d-flex aic gap-2">
-                        <Check />
-                        <p className="fs14" style={{ color: "#777777" }}>
-                          {feature}
-                        </p>
-                      </div>
-                      {index < subscription.features.length - 1 && (
-                        <hr style={{ margin: 2 }} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <Button
-                  styles={{
-                    height: "37px",
-                  }}
-                  className="d-flex aic jcc"
-                  onClick={() => handleSelectPlan(subscription._id, subscription.amount)}
-                  disabled={(loading && selected === subscription._id) || activePlan?.subscription?.name == subscription?.name}
-                >
-                  {loading && selected === subscription._id ? (
-                    <p className="fs14 text-center">Loading... Please wait</p>
-                  ) : (
-                    activePlan?.subscription?.name == subscription?.name ? 'Active' : 'Join'
-                  )}
-                </Button>
-              </div>
-            </div>}
+            </div>
           ))}
         </div>
       </div>
