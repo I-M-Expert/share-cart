@@ -66,15 +66,18 @@ const handleSelectPlan = async (id, amount) => {
     }
   }, [successMessage]);
 
+  const subscriptionOrder = ["basic", "standard", "premium", "starter"];
+const sortedSubscriptions = [...filteredSubscriptions].sort(
+  (a, b) =>
+    subscriptionOrder.indexOf(a.name.toLowerCase()) -
+    subscriptionOrder.indexOf(b.name.toLowerCase())
+);
+
   return (
     <div className="">
-      <div
-        style={{
-          marginTop: "24px",
-        }}
-      >
+      <div style={{ marginTop: "24px" }}>
         <div className="d-lg-flex flex-wrap aie my-3 jcb px-2 ">
-          {filteredSubscriptions?.map((subscription) => (
+          {sortedSubscriptions.map((subscription) => (
             <div
               key={subscription._id}
               className="col-lg-3 col-md-3 col-sm-12 m-3"
