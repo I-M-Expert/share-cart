@@ -151,31 +151,17 @@ export const createCoupon = async (req, res) => {
       if (productIds.length || collectionIds.length) {
         items = {
           all: false,
-          ...(productIds.length
-            ? { products: { productsToAdd: productIds } }
-            : {}),
-          ...(collectionIds.length
-            ? {
-                collections: collectionIds.map((id) => ({
-                  id: `gid://shopify/Collection/${id}`,
-                })),
-              }
-            : {}),
+          ...(productIds.length ? { products: { productsToAdd: productIds } } : {}),
+          ...(collectionIds.length ? { collections: { add: collectionIds } } : {}),
         };
       } else {
         items = { all: true }; // fallback, but you already block this case above
       }
 
       customerGets = {
-        value:
-          discountType === "percentage"
-            ? { percentage: Number(normalizedPercentage) }
-            : {
-                discountAmount: {
-                  amount: Number(fixedAmount),
-                  appliesOnEachItem: false,
-                },
-              },
+        value: discountType === "percentage"
+          ? { percentage: Number(normalizedPercentage) }
+          : { discountAmount: { amount: Number(fixedAmount), appliesOnEachItem: false } },
         items,
       };
 
@@ -561,17 +547,27 @@ console.log('now editting')
         if (updatedProductIds.length || updatedCollectionIds.length) {
           itemsInput = {
             all: false,
-            ...(updatedProductIds.length ? { products: { productsToAdd, productsToRemove } } : {}),
-            ...(updatedCollectionIds.length ? { collections: { collectionsToAdd, collectionsToRemove } } : {}),
+            ...(updatedProductIds.length
+              ? { products: { productsToAdd, productsToRemove } }
+              : {}),
+            ...(updatedCollectionIds.length
+              ? { collections: { add: collectionsToAdd, remove: collectionsToRemove } }
+              : {}),
           };
         } else {
           itemsInput = { all: true };
         }
 
         customerGets = {
-          value: updatedDiscountType === "percentage"
-            ? { percentage: Number(updatedPercentageValue) }
-            : { discountAmount: { amount: Number(updatedFixedAmount), appliesOnEachItem: false } },
+          value:
+            updatedDiscountType === "percentage"
+              ? { percentage: Number(updatedPercentageValue) }
+              : {
+                  discountAmount: {
+                    amount: Number(updatedFixedAmount),
+                    appliesOnEachItem: false,
+                  },
+                },
           items: itemsInput,
         };
 
