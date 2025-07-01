@@ -25,7 +25,7 @@ const Subscription = ({ subscriptions, activePlan=null }) => {
     setPlanType(type);
   };
 
-const handleSelectPlan = async (id) => {
+const handleSelectPlan = async (id, amount) => {
   setLoading(true)
   setSelected(id);
   try {
@@ -39,6 +39,9 @@ const handleSelectPlan = async (id) => {
 
     const data = await response.json();
     if (data.success && data.confirmationUrl) {
+      if(amount == 0){
+      window.top.location.href = `/dashboard?subscriptionActive=true&plan=${data.subscription.name}`;  
+      }
       // Redirect to Shopify's test billing page
       window.top.location.href = data.confirmationUrl;
     } else {
@@ -135,7 +138,7 @@ const handleSelectPlan = async (id) => {
                     height: "37px",
                   }}
                   className="d-flex aic jcc"
-                  onClick={() => handleSelectPlan(subscription._id)}
+                  onClick={() => handleSelectPlan(subscription._id, subscription.amount)}
                   disabled={(loading && selected === subscription._id) || activePlan?.subscription?.name == subscription?.name}
                 >
                   {loading && selected === subscription._id ? (

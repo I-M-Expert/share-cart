@@ -56,7 +56,7 @@ export default function SubscriptionsPage({
                   Pay Monthly
                 </p>
               </div>
-              <div
+              {/* <div
                 onClick={() => setInterval("yearly")}
                 className="d-flex"
                 style={{
@@ -72,7 +72,7 @@ export default function SubscriptionsPage({
                 >
                   Pay Yearly
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
 
