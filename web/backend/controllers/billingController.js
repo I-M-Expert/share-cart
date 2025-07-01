@@ -91,7 +91,7 @@ export const createSubscription = async (req, res) => {
         },
       ],
       returnUrl: `https://${shop}/admin/apps/${process.env.APP_NAME}/confirmation?shop=${shop}&host=${host}&subscriptionId=${subscriptionId}`,
-      test: true,
+      test: false,
     };
 
     const client = new shopify.api.clients.Graphql({ session });
