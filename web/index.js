@@ -113,7 +113,7 @@ app.get(
         body: JSON.stringify({
           email: email,
           name: data?.shop?.name,
-          dayOfCycle : 30,
+          dayOfCycle : 0,
           campaign: { campaignId: process.env.GETRESPONSE_LIST_ID },
         }),
       });
