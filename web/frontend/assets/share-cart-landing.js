@@ -32,7 +32,7 @@
         const domain = window.location.hostname;
         
         // Send analytics data to backend
-        await fetch('https://share-cart.onrender.com/analytics/coupon-usage', {
+        await fetch('https://share-cart-qcbx.onrender.com/analytics/coupon-usage', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -58,7 +58,7 @@
   async function recordCouponClick(discount) {
     if (!discount) return;
     try {
-      await fetch('https://share-cart.onrender.com/coupons/' + encodeURIComponent(discount) + '/click', {
+      await fetch('https://share-cart-qcbx.onrender.com/coupons/' + encodeURIComponent(discount) + '/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

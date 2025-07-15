@@ -229,7 +229,7 @@ app.use("/tools/share-cart", async (req, res) => {
         </head>
         <body>
           <div id="share-cart-app">Restoring your cart...</div>
-          <script src="https://share-cart.onrender.com/share-cart-landing.js"></script>
+          <script src="https://share-cart-qcbx.onrender.com/share-cart-landing.js"></script>
         </body>
       </html>
     `);
