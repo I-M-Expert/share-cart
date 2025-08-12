@@ -44,9 +44,11 @@ const handleSelectPlan = async (id, amount) => {
       }
       // Redirect to Shopify's test billing page
       window.top.location.href = data.confirmationUrl;
-    } else {
-      console.error("Error creating subscription:", data.errors);
-      // Handle error (show message to user, etc.)
+    } 
+
+    if(data.success && data.freePlan){
+      setSuccessMessage("You have successfully activated the free plan.");
+      window.top.location.href = `${data.url}`;
     }
   } catch (error) {
     console.error("Failed to create subscription:", error);
